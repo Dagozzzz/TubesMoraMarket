@@ -48,8 +48,5 @@ class KategoriSupplier extends Model
     }
 
     // Satu kategori bisa punya banyak transaksi return pembelian
-    public function returnPembelian(): HasMany
-    {
-        return $this->hasMany(ReturnPembelian::class, 'id_kategori', 'id_kategori');
-    }
+   
 }
