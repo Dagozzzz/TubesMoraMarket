@@ -2,27 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Supplier extends Model
 {
-    use HasFactory;
+    protected $table = 'supplier'; // ← tambah ini
 
-    protected $table = 'suppliers';
+    protected $fillable = [
+        'kode_supplier',
+        'nama_supplier',
+        'no_handphone',
+        'id_kategori_supplier',
+    
+    ];
 
-    protected $guarded = [];
-
-    protected static function boot()
+    public function kategoriSupplier(): BelongsTo
     {
-        parent::boot();
-
-        static::creating(function ($model) {
-            $last = static::orderBy('id', 'desc')->first();
-
-            $newNumber = $last ? (int) substr($last->kode_supplier, 3) + 1 : 1;
-
-            $model->kode_supplier = 'SUP' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-        });
+        return $this->belongsTo(KategoriSupplier::class, 'id_kategori_supplier', 'id');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Models\Supplier;
+use App\Models\KategoriSupplier;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
@@ -23,9 +24,7 @@ class SupplierResource extends Resource
     protected static ?string $model = Supplier::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
-
     protected static ?string $navigationLabel = 'Supplier';
-
     protected static ?string $pluralModelLabel = 'Supplier';
 
     public static function form(Form $form): Form
@@ -51,22 +50,14 @@ class SupplierResource extends Resource
                     ->tel()
                     ->required(),
 
-                Select::make('kategori')
+                Select::make('id_kategori_supplier')
                     ->label('Kategori')
-                    ->options([
-                        'Food & Beverage'     => 'Food & Beverage',
-                        'Household'           => 'Household',
-                        'Personal Care'       => 'Personal Care',
-                        'Frozen Food'         => 'Frozen Food',
-                        'General Merchandise' => 'General Merchandise',
-                    ])
+                    ->relationship('kategoriSupplier', 'nama_kategori')
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
-                FileUpload::make('gambar')
-                    ->label('Gambar')
-                    ->image()
-                    ->directory('suppliers')
-                    ->required(),
+                
             ]);
     }
 
@@ -88,21 +79,13 @@ class SupplierResource extends Resource
                     ->label('No. Handphone')
                     ->searchable(),
 
-                TextColumn::make('kategori')
+                TextColumn::make('kategoriSupplier.nama_kategori')
                     ->label('Kategori')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'Food & Beverage'     => 'primary',
-                        'Household'           => 'success',
-                        'Personal Care'       => 'warning',
-                        'Frozen Food'         => 'danger',
-                        'General Merchandise' => 'gray',
-                        default               => 'secondary',
-                    }),
+                    ->color('primary')
+                    ->searchable()
+                    ->sortable(),
 
-                ImageColumn::make('gambar')
-                    ->label('Gambar')
-                    ->size(50),
 
                 TextColumn::make('created_at')
                     ->label('Dibuat')

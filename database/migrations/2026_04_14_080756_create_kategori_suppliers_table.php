@@ -10,10 +10,11 @@ return new class extends Migration
     {
         Schema::create('kategori_supplier', function (Blueprint $table) {
 
-            $table->string('id_kategori')->primary();
+            $table->id();
 
             $table->string('nama_kategori')->unique();
-            $table->text('deskripsi');
+            $table->text('deskripsi')->nullable();
+
             $table->timestamps();
         });
     }
