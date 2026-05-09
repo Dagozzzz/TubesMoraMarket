@@ -2,23 +2,29 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Supplier extends Model
 {
-    protected $table = 'supplier'; // ← tambah ini
+    use HasFactory;
+
+    protected $table = 'suppliers';
 
     protected $fillable = [
         'kode_supplier',
         'nama_supplier',
         'no_handphone',
         'id_kategori_supplier',
-    
+        'gambar',
     ];
 
-    public function kategoriSupplier(): BelongsTo
+    public function kategoriSupplier()
     {
-        return $this->belongsTo(KategoriSupplier::class, 'id_kategori_supplier', 'id');
+        return $this->belongsTo(
+            KategoriSupplier::class,
+            'id_kategori_supplier',
+            'id_kategori'
+        );
     }
 }

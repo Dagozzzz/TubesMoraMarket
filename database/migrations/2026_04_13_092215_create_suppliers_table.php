@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('supplier', function (Blueprint $table) {
+        Schema::create('suppliers', function (Blueprint $table) {
 
             $table->id();
 
@@ -16,9 +16,13 @@ return new class extends Migration
             $table->string('nama_supplier');
             $table->string('no_handphone');
 
-            $table->foreignId('id_kategori_supplier')
-                ->nullable()
-                ->constrained('kategori_supplier')
+            // samakan dengan primary key kategori
+            $table->string('id_kategori_supplier')->nullable();
+
+            // foreign key manual
+            $table->foreign('id_kategori_supplier')
+                ->references('id_kategori')
+                ->on('kategori_supplier')
                 ->nullOnDelete();
 
             $table->string('gambar')->nullable();
@@ -29,6 +33,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('supplier');
+        Schema::dropIfExists('suppliers');
     }
 };
