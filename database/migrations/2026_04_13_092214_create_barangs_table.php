@@ -6,22 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-<<<<<<< HEAD
-    
-=======
     /**
      * Run the migrations.
      */
->>>>>>> 26e97f2025c755b96589f8a20891e02a0db0ccd4
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('barang', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->string('kode_barang')->unique();
+            $table->string('nama_barang'); 
+            $table->string('kategori');
+            $table->string('satuan'); 
+            $table->decimal('harga_beli');
+            $table->decimal('harga_jual'); 
             $table->timestamps();
         });
     }
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('barang');
     }
 };

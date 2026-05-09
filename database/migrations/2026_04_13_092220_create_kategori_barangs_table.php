@@ -6,19 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-<<<<<<< HEAD
-    
-=======
     /**
      * Run the migrations.
      */
->>>>>>> 26e97f2025c755b96589f8a20891e02a0db0ccd4
     public function up(): void
     {
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+        Schema::create('kategori_barang', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode_kategori')->unique(); // Kode kategori (unik)
+            $table->string('jenis_kategori');          // Jenis / nama kategori
+            $table->timestamps();
         });
     }
 
@@ -27,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('kategori_barang');
     }
 };
