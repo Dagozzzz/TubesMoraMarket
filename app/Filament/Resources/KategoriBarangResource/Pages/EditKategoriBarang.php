@@ -16,4 +16,10 @@ class EditKategoriBarang extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    // TAMBAHAN: redirect ke list setelah save
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

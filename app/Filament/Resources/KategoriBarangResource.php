@@ -32,11 +32,18 @@ class KategoriBarangResource extends Resource
     {
         return $form
             ->schema([
+                // DIUBAH: dari required/unique jadi disabled + auto-generate
                 TextInput::make('kode_kategori')
                     ->label('Kode Kategori')
+                    ->disabled()
+                    ->placeholder('Auto-generate (BRG001)')
+                    ->dehydrated(false),
+
+                // DIUBAH: nama_kategori -> nama_barang
+                TextInput::make('nama_barang')
+                    ->label('Nama Barang')
                     ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(50),
+                    ->maxLength(100),
 
                 // Diubah dari TextInput ke Select
                 Select::make('jenis_kategori')
@@ -60,6 +67,12 @@ class KategoriBarangResource extends Resource
             ->columns([
                 TextColumn::make('kode_kategori')
                     ->label('Kode Kategori')
+                    ->searchable()
+                    ->sortable(),
+
+                // DIUBAH: nama_kategori -> nama_barang
+                TextColumn::make('nama_barang')
+                    ->label('Nama Barang')
                     ->searchable()
                     ->sortable(),
 
