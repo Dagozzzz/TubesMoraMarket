@@ -28,6 +28,8 @@ class KategoriBarangResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Kategori Barang';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -76,7 +78,7 @@ class KategoriBarangResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                BadgeColumn::make('jenis_kategori')
+                TextColumn::make('jenis_kategori')
                     ->label('Jenis Kategori')
                     ->searchable()
                     ->sortable(),
