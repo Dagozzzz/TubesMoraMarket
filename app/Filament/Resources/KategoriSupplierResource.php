@@ -26,6 +26,8 @@ class KategoriSupplierResource extends Resource
     protected static ?string $navigationLabel = 'Kategori Supplier';
     protected static ?string $pluralLabel = 'Data Kategori Supplier';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -46,7 +48,7 @@ class KategoriSupplierResource extends Resource
                             }
 
                             // generate realtime
-                            $last = \App\Models\KategoriSupplier::orderBy('id_kategori', 'desc')->first();
+                          $last = KategoriSupplier::orderBy('id_kategori', 'desc')->first();
 
                             if ($last) {
                                 $number = (int) substr($last->id_kategori, 3) + 1;
