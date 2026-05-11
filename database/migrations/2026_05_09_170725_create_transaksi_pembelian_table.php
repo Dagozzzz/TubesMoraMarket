@@ -65,7 +65,7 @@ return new class extends Migration
 
             $table->decimal('harga_satuan', 15, 2);
 
-            $table->decimal('subtotal', 15, 2);
+            $table->decimal('subtotal', 15, 2)->default(0);
 
             $table->timestamps();
         });
