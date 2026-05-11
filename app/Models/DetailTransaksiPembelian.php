@@ -9,14 +9,14 @@ class DetailTransaksiPembelian extends Model
 {
     protected $table = 'detail_transaksi_pembelian';
 
-    protected $fillable = [
-        'id_transaksi_pembelian',
-        'nama_produk',
-        'satuan',
-        'jumlah',
-        'harga_satuan',
-        'subtotal',
-    ];
+   protected $fillable = [
+    'id_transaksi_pembelian',
+    'nama_produk',
+    'satuan',
+    'jumlah',
+    'harga_satuan',
+    'subtotal',
+];
 
     protected $casts = [
         'harga_satuan' => 'decimal:2',
