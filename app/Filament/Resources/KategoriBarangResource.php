@@ -78,7 +78,7 @@ class KategoriBarangResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                BadgeColumn::make('jenis_kategori')
+                TextColumn::make('jenis_kategori')
                     ->label('Jenis Kategori')
                     ->searchable()
                     ->sortable(),

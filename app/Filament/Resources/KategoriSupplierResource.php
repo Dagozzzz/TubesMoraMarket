@@ -48,7 +48,7 @@ class KategoriSupplierResource extends Resource
                             }
 
                             // generate realtime
-                            $last = \App\Models\KategoriSupplier::orderBy('id_kategori', 'desc')->first();
+                          $last = KategoriSupplier::orderBy('id_kategori', 'desc')->first();
 
                             if ($last) {
                                 $number = (int) substr($last->id_kategori, 3) + 1;
