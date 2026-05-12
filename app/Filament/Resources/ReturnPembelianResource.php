@@ -272,7 +272,7 @@ class ReturnPembelianResource extends Resource
                     ->money('IDR')
                     ->sortable(),
 
-                TextColumn::make('detailReturn_count')
+                TextColumn::make('detail_return_count')
                     ->counts('detailReturn')
                     ->label('Jml Item')
                     ->alignCenter(),
