@@ -6,11 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-<<<<<<< HEAD
         "filament/filament": "3.3",
-=======
-        "filament/filament": "^3.3",
->>>>>>> 26e97f2025c755b96589f8a20891e02a0db0ccd4
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.2",
