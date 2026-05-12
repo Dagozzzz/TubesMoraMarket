@@ -9,38 +9,44 @@ use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
 
-// Komponen Form
+// Form Components
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\FileUpload;
 
-// Komponen Tabel
+// Table Components
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ImageColumn;
 
 class SupplierResource extends Resource
 {
     protected static ?string $model = Supplier::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
-
     protected static ?string $navigationLabel = 'Supplier';
-
     protected static ?string $pluralModelLabel = 'Supplier';
+
+    protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+
                 TextInput::make('kode_supplier')
                     ->label('Kode Supplier')
                     ->default(function () {
+
                         $last = Supplier::orderBy('id', 'desc')->first();
-                        $newNumber = $last ? (int) substr($last->kode_supplier, 3) + 1 : 1;
+
+                        $newNumber = $last
+                            ? (int) substr($last->kode_supplier, 3) + 1
+                            : 1;
+
                         return 'SUP' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
                     })
                     ->disabled()
-                    ->dehydrated(false),
+                    ->dehydrated(true) // PENTING
+                    ->required()
+                    ->unique(ignoreRecord: true),
 
                 TextInput::make('nama_supplier')
                     ->label('Nama Supplier')
@@ -51,22 +57,13 @@ class SupplierResource extends Resource
                     ->tel()
                     ->required(),
 
-                Select::make('kategori')
+                Select::make('id_kategori_supplier')
                     ->label('Kategori')
-                    ->options([
-                        'Food & Beverage'     => 'Food & Beverage',
-                        'Household'           => 'Household',
-                        'Personal Care'       => 'Personal Care',
-                        'Frozen Food'         => 'Frozen Food',
-                        'General Merchandise' => 'General Merchandise',
-                    ])
+                    ->relationship('kategoriSupplier', 'nama_kategori')
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
-                FileUpload::make('gambar')
-                    ->label('Gambar')
-                    ->image()
-                    ->directory('suppliers')
-                    ->required(),
             ]);
     }
 
@@ -74,6 +71,7 @@ class SupplierResource extends Resource
     {
         return $table
             ->columns([
+
                 TextColumn::make('kode_supplier')
                     ->label('Kode Supplier')
                     ->searchable()
@@ -88,26 +86,18 @@ class SupplierResource extends Resource
                     ->label('No. Handphone')
                     ->searchable(),
 
-                TextColumn::make('kategori')
+                TextColumn::make('kategoriSupplier.nama_kategori')
                     ->label('Kategori')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'Food & Beverage'     => 'primary',
-                        'Household'           => 'success',
-                        'Personal Care'       => 'warning',
-                        'Frozen Food'         => 'danger',
-                        'General Merchandise' => 'gray',
-                        default               => 'secondary',
-                    }),
-
-                ImageColumn::make('gambar')
-                    ->label('Gambar')
-                    ->size(50),
+                    ->color('primary')
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y')
                     ->sortable(),
+
             ])
             ->filters([
                 //

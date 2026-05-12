@@ -11,18 +11,20 @@ class Supplier extends Model
 
     protected $table = 'suppliers';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'kode_supplier',
+        'nama_supplier',
+        'no_handphone',
+        'id_kategori_supplier',
+        'gambar',
+    ];
 
-    protected static function boot()
+    public function kategoriSupplier()
     {
-        parent::boot();
-
-        static::creating(function ($model) {
-            $last = static::orderBy('id', 'desc')->first();
-
-            $newNumber = $last ? (int) substr($last->kode_supplier, 3) + 1 : 1;
-
-            $model->kode_supplier = 'SUP' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-        });
+        return $this->belongsTo(
+            KategoriSupplier::class,
+            'id_kategori_supplier',
+            'id_kategori'
+        );
     }
 }

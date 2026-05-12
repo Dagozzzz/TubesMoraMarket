@@ -13,7 +13,8 @@ return new class extends Migration
             $table->string('id_kategori')->primary();
 
             $table->string('nama_kategori')->unique();
-            $table->text('deskripsi');
+            $table->text('deskripsi')->nullable();
+
             $table->timestamps();
         });
     }
