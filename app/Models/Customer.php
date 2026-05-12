@@ -9,9 +9,18 @@ class Customer extends Model
 {
     use HasFactory;
 
-    protected $table = 'customers'; // Nama tabel
+    // Nama tabel yang digunakan di database[cite: 2]
+    protected $table = 'customers';
 
-    protected $primaryKey = 'id_customer'; // Custom primary key
+    // Menentukan primary key kustom[cite: 2]
+    protected $primaryKey = 'id_customer';
 
-    protected $guarded = []; // Boleh isi semua field
+    // Karena id_customer menggunakan format string 'FF01', auto-increment harus dimatikan
+    public $incrementing = false;
+
+    // Menentukan tipe data primary key sebagai string
+    protected $keyType = 'string';
+
+    // Memungkinkan semua kolom diisi secara mass-assignment[cite: 2]
+    protected $guarded = [];
 }
