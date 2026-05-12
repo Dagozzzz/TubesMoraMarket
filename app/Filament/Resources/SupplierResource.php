@@ -28,6 +28,8 @@ class SupplierResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Supplier';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form

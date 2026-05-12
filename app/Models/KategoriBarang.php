@@ -13,7 +13,6 @@ class KategoriBarang extends Model
 
     protected $guarded = [];
 
-    // TAMBAHAN: auto-generate kode_kategori
     protected static function boot()
     {
         parent::boot();

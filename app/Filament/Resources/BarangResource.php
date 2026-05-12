@@ -4,20 +4,15 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BarangResource\Pages;
 use App\Models\Barang;
-use Filament\Forms;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-
-// Form Components
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Grid;
-
-// Table Components
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class BarangResource extends Resource
 {
@@ -29,52 +24,47 @@ class BarangResource extends Resource
 
     protected static ?string $pluralLabel = 'Data Barang';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Grid::make(2)->schema([
-                   TextInput::make('kode_barang')
-                   ->label('Kode Barang')
-                   ->default(function () {
-                     $lastBarang = \App\Models\Barang::orderBy('id', 'desc')->first();
-                     if ($lastBarang) {
-                        $lastNumber = (int) substr($lastBarang->kode_barang, 3);
-                        $newNumber = $lastNumber + 1;
-                        } else {
-                            $newNumber = 1;
-                            }
-                            return 'BRG' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-                            })
-                            ->disabled(),
+                    TextInput::make('kode_barang')
+                        ->label('Kode Barang')
+                        ->default(fn (): string => Barang::generateKodeBarang())
+                        ->disabled()
+                        ->dehydrated(false),
 
                     TextInput::make('nama_barang')
                         ->label('Nama Barang')
-                        ->required(),
+                        ->required()
+                        ->maxLength(255),
 
                     Select::make('kategori')
                         ->label('Kategori')
                         ->options([
-                            'Elektronik'        => 'Elektronik',
-                            'Pakaian'           => 'Pakaian',
+                            'Elektronik' => 'Elektronik',
+                            'Pakaian' => 'Pakaian',
                             'Makanan & Minuman' => 'Makanan & Minuman',
-                            'Perabot Rumah'     => 'Perabot Rumah',
-                            'Olahraga'          => 'Olahraga',
-                            'Lainnya'           => 'Lainnya',
+                            'Perabot Rumah' => 'Perabot Rumah',
+                            'Olahraga' => 'Olahraga',
+                            'Lainnya' => 'Lainnya',
                         ])
                         ->required(),
 
-                   Select::make('satuan')
-                   ->label('Satuan')
-                    ->options([
-                        'pcs'  => 'pcs',
-                        'box'  => 'box',
-                        'pack' => 'pack',
-                        'lusin'=> 'lusin',
-                        'kg'   => 'kg',
-                        'liter'=> 'liter',
+                    Select::make('satuan')
+                        ->label('Satuan')
+                        ->options([
+                            'pcs' => 'pcs',
+                            'box' => 'box',
+                            'pack' => 'pack',
+                            'lusin' => 'lusin',
+                            'kg' => 'kg',
+                            'liter' => 'liter',
                         ])
-                        ->searchable()
+                        ->native()
                         ->required(),
 
                     TextInput::make('harga_beli')
@@ -87,9 +77,8 @@ class BarangResource extends Resource
                         ->label('Harga Jual')
                         ->numeric()
                         ->prefix('Rp')
-                        ->numeric()
                         ->required(),
-                ])
+                ]),
             ]);
     }
 
@@ -113,9 +102,9 @@ class BarangResource extends Resource
                         'primary' => 'Elektronik',
                         'success' => 'Pakaian',
                         'warning' => 'Makanan & Minuman',
-                        'info'    => 'Perabot Rumah',
-                        'danger'  => 'Olahraga',
-                        'gray'    => 'Lainnya',
+                        'info' => 'Perabot Rumah',
+                        'danger' => 'Olahraga',
+                        'gray' => 'Lainnya',
                     ]),
 
                 TextColumn::make('satuan')
@@ -123,25 +112,40 @@ class BarangResource extends Resource
 
                 TextColumn::make('harga_beli')
                     ->label('Harga Beli')
-                    // ->money('IDR', true)
-                    ->prefix('Rp')
-                    ->numeric()
+                    ->money('IDR')
                     ->sortable(),
 
                 TextColumn::make('harga_jual')
                     ->label('Harga Jual')
-                    // ->money('IDR', true)
-                    ->prefix('Rp')
-                    ->numeric()
+                    ->money('IDR')
+                    ->sortable(),
+
+                TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y')
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\DeleteAction::make()
+                //     ->label('Hapus')
+                //     ->icon('heroicon-o-trash')
+                //     ->button()
+                //     ->color('danger')
+                //     ->requiresConfirmation()
+                //     ->modalHeading('Hapus Barang')
+                //     ->modalDescription('Apakah Anda yakin ingin menghapus barang ini? Data yang sudah dihapus tidak dapat dikembalikan.')
+                //     ->modalSubmitActionLabel('Hapus')
+                //     ->modalCancelActionLabel('Batal')
+                //     ->successNotificationTitle('Barang berhasil dihapus')
+                //     ->extraAttributes([
+                //         'class' => 'relative z-10',
+                //         'onclick' => 'event.stopPropagation()',
+                //     ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -166,4 +170,3 @@ class BarangResource extends Resource
         ];
     }
 }
-

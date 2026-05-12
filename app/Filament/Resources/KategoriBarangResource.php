@@ -28,6 +28,8 @@ class KategoriBarangResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Kategori Barang';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form

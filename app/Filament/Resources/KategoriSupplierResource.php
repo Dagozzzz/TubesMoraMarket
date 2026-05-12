@@ -26,6 +26,8 @@ class KategoriSupplierResource extends Resource
     protected static ?string $navigationLabel = 'Kategori Supplier';
     protected static ?string $pluralLabel = 'Data Kategori Supplier';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Barang extends Model
 {
-    protected $table = 'barang'; // 🔥 WAJIB (fix error)
+    protected $table = 'barang';
 
     protected $fillable = [
         'kode_barang',
@@ -17,22 +17,26 @@ class Barang extends Model
         'harga_jual',
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
-        static::creating(function ($barang) {
-
-            $lastBarang = self::orderBy('id', 'desc')->first();
-
-            if ($lastBarang) {
-                $lastNumber = (int) substr($lastBarang->kode_barang, 3);
-                $newNumber = $lastNumber + 1;
-            } else {
-                $newNumber = 1;
+        static::creating(function (Barang $barang): void {
+            if (blank($barang->kode_barang)) {
+                $barang->kode_barang = self::generateKodeBarang();
             }
-
-            $barang->kode_barang = 'BRG' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
         });
+    }
+
+    public static function generateKodeBarang(): string
+    {
+        $lastBarang = self::query()
+            ->where('kode_barang', 'like', 'BRG%')
+            ->orderByDesc('id')
+            ->first();
+
+        $lastNumber = $lastBarang ? (int) substr($lastBarang->kode_barang, 3) : 0;
+
+        return 'BRG' . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
     }
 }
