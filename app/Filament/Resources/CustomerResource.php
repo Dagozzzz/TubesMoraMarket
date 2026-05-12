@@ -9,11 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-
-// Form Components
 use Filament\Forms\Components\TextInput;
-
-// Table Columns
 use Filament\Tables\Columns\TextColumn;
 
 class CustomerResource extends Resource
@@ -29,6 +25,20 @@ class CustomerResource extends Resource
     {
         return $form
             ->schema([
+                TextInput::make('id_customer')
+                    ->label('ID Customer')
+                    ->default(function () {
+                        // Logika otomatis untuk mengisi ID di form Create
+                        $latestCustomer = Customer::orderBy('id_customer', 'desc')->first();
+                        if (!$latestCustomer) {
+                            return 'FF01';
+                        }
+                        $number = intval(substr($latestCustomer->id_customer, 2)) + 1;
+                        return 'FF' . str_pad($number, 2, '0', STR_PAD_LEFT);
+                    })
+                    ->readOnly() // Agar tidak bisa diedit
+                    ->required(),
+
                 TextInput::make('nama_customer')
                     ->label('Nama Customer')
                     ->required(),
@@ -38,13 +48,9 @@ class CustomerResource extends Resource
                     ->email()
                     ->required(),
 
-                TextInput::make('no_telepon') // ✅ TAMBAHAN
+                TextInput::make('no_telepon')
                     ->label('No Telepon')
-                    ->tel() // khusus nomor telepon
-                    ->required(),
-
-                TextInput::make('no_transaksi')
-                    ->label('No Transaksi')
+                    ->tel()
                     ->required(),
             ]);
     }
@@ -54,7 +60,7 @@ class CustomerResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id_customer')
-                    ->label('ID')
+                    ->label('ID Customer')
                     ->sortable(),
 
                 TextColumn::make('nama_customer')
@@ -66,13 +72,9 @@ class CustomerResource extends Resource
                     ->label('Email')
                     ->searchable(),
 
-                TextColumn::make('no_telepon') // ✅ TAMBAHAN
+                TextColumn::make('no_telepon')
                     ->label('No Telepon')
                     ->searchable(),
-
-                TextColumn::make('no_transaksi')
-                    ->label('No Transaksi')
-                    ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('Dibuat')
@@ -95,9 +97,7 @@ class CustomerResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

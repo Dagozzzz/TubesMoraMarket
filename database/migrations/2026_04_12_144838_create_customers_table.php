@@ -12,11 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id('id_customer'); // ID Customer (custom primary key)
-            $table->string('nama_customer'); // Nama Customer
-            $table->string('email')->unique(); // Email Customer
-            $table->string('no_telepon'); // Nomor Telepon (BARU)
-            $table->string('no_transaksi'); // Nomor Transaksi
+            $table->string('id_customer')->primary(); 
+            $table->string('nama_customer');
+            $table->string('email')->unique();
+            $table->string('no_telepon'); 
             $table->timestamps();
         });
     }
