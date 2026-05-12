@@ -17,7 +17,7 @@ use Filament\Forms\Components\Grid;
 
 // Table Components
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
+
 
 class BarangResource extends Resource
 {
@@ -29,6 +29,8 @@ class BarangResource extends Resource
 
     protected static ?string $pluralLabel = 'Data Barang';
 
+    protected static ?string $navigationGroup = 'Master Data';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -37,7 +39,7 @@ class BarangResource extends Resource
                    TextInput::make('kode_barang')
                    ->label('Kode Barang')
                    ->default(function () {
-                     $lastBarang = \App\Models\Barang::orderBy('id', 'desc')->first();
+                     $lastBarang = Barang::orderBy('id', 'desc')->first();
                      if ($lastBarang) {
                         $lastNumber = (int) substr($lastBarang->kode_barang, 3);
                         $newNumber = $lastNumber + 1;
@@ -107,7 +109,7 @@ class BarangResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                BadgeColumn::make('kategori')
+                TextColumn::make('kategori')
                     ->label('Kategori')
                     ->colors([
                         'primary' => 'Elektronik',
