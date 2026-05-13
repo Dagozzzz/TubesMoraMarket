@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Barang extends Model
 {
-    protected $table = 'barang'; // 🔥 WAJIB (fix error)
+    protected $table = 'barang';
 
     protected $fillable = [
         'kode_barang',
@@ -22,7 +22,6 @@ class Barang extends Model
         parent::boot();
 
         static::creating(function ($barang) {
-
             $lastBarang = self::orderBy('id', 'desc')->first();
 
             if ($lastBarang) {
