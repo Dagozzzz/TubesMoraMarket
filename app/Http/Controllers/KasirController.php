@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barang;
+use App\Models\Customer;
+use App\Models\TransaksiPenjualan;
 use App\Models\User;
 use App\Services\MidtransSnapService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use RuntimeException;
@@ -117,6 +120,7 @@ class KasirController extends Controller
                 'kode_barang' => $barang->kode_barang,
                 'nama_barang' => $barang->nama_barang,
                 'kategori' => $barang->kategori,
+                'satuan' => $barang->satuan,
                 'harga_jual' => (int) $barang->harga_jual,
                 'qty' => 1,
             ];
@@ -192,6 +196,8 @@ class KasirController extends Controller
         return view('kasir.checkout', [
             'cart' => $this->cart(),
             'cartSummary' => $this->cartSummary(),
+            'customers' => Customer::orderBy('nama_customer')->get(),
+            'selectedCustomerId' => session('checkout.id_customer'),
             'midtransClientKey' => config('services.midtrans.client_key'),
             'midtransSnapUrl' => rtrim(config('services.midtrans.snap_url'), '/') . '/snap/snap.js',
             'snapToken' => session('midtrans.snap_token'),
@@ -206,23 +212,68 @@ class KasirController extends Controller
             return redirect()->route('kasir.login');
         }
 
+        $validated = request()->validate([
+            'id_customer' => ['required', 'string', 'exists:customers,id_customer'],
+        ]);
+
         if ($this->cartSummary()['items'] === 0) {
             return redirect()->route('kasir.dashboard')
                 ->with('error', 'Keranjang masih kosong.');
         }
 
+        $customer = Customer::findOrFail($validated['id_customer']);
+        $kodePenjualan = TransaksiPenjualan::generateKodePenjualan();
+
         try {
             $transaction = $midtrans->createTransaction(
                 $this->cart(),
                 $this->cartSummary(),
-                session('kasir', [])
+                [
+                    'nama' => $customer->nama_customer,
+                    'email' => $customer->email,
+                ],
+                $kodePenjualan
             );
         } catch (RuntimeException $exception) {
             return back()->with('error', $exception->getMessage());
         }
 
+        $penjualan = DB::transaction(function () use ($customer, $kodePenjualan, $transaction) {
+            $penjualan = TransaksiPenjualan::create([
+                'kode_penjualan' => $kodePenjualan,
+                'id_customer' => $customer->id_customer,
+                'id_kasir' => Auth::id(),
+                'tanggal_penjualan' => now(),
+                'status_pembayaran' => 'pending',
+                'metode_pembayaran' => 'midtrans',
+                'midtrans_order_id' => $transaction['order_id'],
+                'midtrans_snap_token' => $transaction['token'],
+                'midtrans_redirect_url' => $transaction['redirect_url'],
+                'total_harga' => $this->cartSummary()['total'],
+            ]);
+
+            foreach ($this->cart() as $item) {
+                $penjualan->detailTransaksi()->create([
+                    'id_barang' => $item['id'],
+                    'kode_barang' => $item['kode_barang'],
+                    'nama_barang' => $item['nama_barang'],
+                    'kategori' => $item['kategori'] ?? null,
+                    'satuan' => $item['satuan'] ?? 'pcs',
+                    'jumlah' => $item['qty'],
+                    'harga_satuan' => $item['harga_jual'],
+                    'subtotal' => $item['harga_jual'] * $item['qty'],
+                ]);
+            }
+
+            return $penjualan;
+        });
+
         session([
+            'checkout' => [
+                'id_customer' => $customer->id_customer,
+            ],
             'midtrans' => [
+                'transaksi_penjualan_id' => $penjualan->id,
                 'order_id' => $transaction['order_id'],
                 'snap_token' => $transaction['token'],
                 'redirect_url' => $transaction['redirect_url'],
@@ -244,12 +295,23 @@ class KasirController extends Controller
         ]);
 
         $status = $request->input('payment_status', 'pending');
+        $penjualan = TransaksiPenjualan::find(session('midtrans.transaksi_penjualan_id'));
 
         if (in_array($status, ['success', 'pending'], true)) {
-            session()->forget(['cart', 'midtrans']);
+            if ($penjualan) {
+                $penjualan->update([
+                    'status_pembayaran' => $status === 'success' ? 'lunas' : 'pending',
+                ]);
+            }
+
+            session()->forget(['cart', 'midtrans', 'checkout']);
 
             return redirect()->route('kasir.dashboard')
                 ->with('success', 'Transaksi Midtrans berhasil diproses dengan status ' . $status . '.');
+        }
+
+        if ($penjualan && $status === 'error') {
+            $penjualan->update(['status_pembayaran' => 'gagal']);
         }
 
         return redirect()->route('kasir.checkout')

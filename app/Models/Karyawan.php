@@ -19,7 +19,7 @@ class Karyawan extends Model
         'nik',
         'nip',
         'jenis_kelamin',
-        'jabatan_id', // pakai ini kalau pakai relasi
+        'jabatan',
         'foto',
     ];
 
@@ -38,13 +38,7 @@ class Karyawan extends Model
         });
     }
 
-    /**
-     * Relasi ke jabatan
-     */
-    public function jabatan()
-    {
-        return $this->belongsTo(Jabatan::class);
-    }
+
     protected $appends = ['foto_url'];
 
 public function getFotoUrlAttribute()

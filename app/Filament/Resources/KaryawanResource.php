@@ -54,6 +54,8 @@ class KaryawanResource extends Resource
 
             TextInput::make('nip')->unique(ignoreRecord: true),
 
+
+
             Select::make('jenis_kelamin')
                 ->options([
                     'L' => 'Laki-laki',
@@ -61,11 +63,17 @@ class KaryawanResource extends Resource
                 ])
                 ->required(),
 
-            Select::make('jabatan_id')
+            Select::make('jabatan')
                 ->label('Jabatan')
-                ->options(function () {
-                    return \App\Models\Jabatan::all()->unique('nama_jabatan')->pluck('nama_jabatan', 'id');
-                })
+                ->options([
+                    'admin' => 'Admin',
+                    'owner' => 'Owner',
+                    'kebersihan' => 'Kebersihan',
+                    'kasir' => 'Kasir',
+                    'keamanan' => 'Keamanan',
+                    'gudang' => 'Gudang',
+                ])
+                ->searchable()
                 ->required(),
 
             FileUpload::make('foto')
@@ -85,7 +93,7 @@ class KaryawanResource extends Resource
 
             TextColumn::make('nama')->searchable(),
 
-            TextColumn::make('jabatan.nama_jabatan'),
+            TextColumn::make('jabatan'),
 
             TextColumn::make('jenis_kelamin'),
 

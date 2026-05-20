@@ -33,6 +33,12 @@ class TransaksiPembelianResource extends Resource
 {
     protected static ?string $model = TransaksiPembelian::class;
 
+    // =========================================================
+    // ICON & LABEL NAVIGASI SIDEBAR
+    // Ubah icon  → ganti 'heroicon-o-shopping-cart'
+    // Ubah nama menu → ganti string di navigationLabel
+    // Ubah grup menu → ganti string di navigationGroup
+    // =========================================================
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?string $navigationLabel = 'Transaksi Pembelian';
     protected static ?string $pluralModelLabel = 'Transaksi Pembelian';
@@ -43,18 +49,22 @@ class TransaksiPembelianResource extends Resource
         return $form
             ->schema([
 
-                /*
-                |--------------------------------------------------------------------------
-                | INFORMASI TRANSAKSI
-                |--------------------------------------------------------------------------
-                */
-
+                // =====================================================
+                // SECTION 1 — INFORMASI TRANSAKSI
+                // Berisi: kode pembelian (auto) & tanggal pembelian
+                // =====================================================
                 Section::make('Informasi Transaksi')
                     ->icon('heroicon-o-document-text')
                     ->schema([
 
                         Grid::make(2)->schema([
 
+                            // --------------------------------------------------
+                            // KODE PEMBELIAN — auto-generate, tidak bisa diedit
+                            // Format: PBL-0001, PBL-0002, dst.
+                            // Ubah prefix → ganti 'PBL-'
+                            // Ubah panjang angka → ganti str_pad(..., 4, ...)
+                            // --------------------------------------------------
                             TextInput::make('kode_pembelian')
                                 ->label('Kode Pembelian')
                                 ->default(function () {
@@ -65,11 +75,17 @@ class TransaksiPembelianResource extends Resource
                                         ? ((int) substr($last->kode_pembelian, 4)) + 1
                                         : 1;
 
+                                    // Ubah 'PBL-' untuk ganti prefix kode
+                                    // Ubah angka 4 di str_pad untuk ganti panjang digit
                                     return 'PBL-' . str_pad($number, 4, '0', STR_PAD_LEFT);
                                 })
                                 ->disabled()
-                                ->dehydrated(true),
+                                ->dehydrated(true), // dehydrated(true) = tetap disimpan walau disabled
 
+                            // --------------------------------------------------
+                            // TANGGAL PEMBELIAN — default hari ini
+                            // Ubah format tampilan → ganti displayFormat('d M Y')
+                            // --------------------------------------------------
                             DatePicker::make('tanggal_pembelian')
                                 ->label('Tanggal Pembelian')
                                 ->default(now())
@@ -81,24 +97,28 @@ class TransaksiPembelianResource extends Resource
 
                     ]),
 
-                /*
-                |--------------------------------------------------------------------------
-                | DATA SUPPLIER
-                |--------------------------------------------------------------------------
-                */
-
+                // =====================================================
+                // SECTION 2 — DATA SUPPLIER
+                // Berisi: dropdown supplier, nama, no HP, metode bayar
+                // =====================================================
                 Section::make('Data Supplier')
                     ->icon('heroicon-o-truck')
                     ->schema([
 
                         Grid::make(2)->schema([
 
+                            // --------------------------------------------------
+                            // SELECT SUPPLIER
+                            // Saat dipilih → otomatis isi nama & no HP (live)
+                            // Data diambil dari tabel suppliers
+                            // --------------------------------------------------
                             Select::make('id_supplier')
                                 ->label('ID / Kode Supplier')
                                 ->options(function () {
 
                                     return Supplier::all()->mapWithKeys(function ($supplier) {
 
+                                        // Format dropdown: "SUP-001 - Nama Supplier"
                                         return [
                                             $supplier->id =>
                                                 $supplier->kode_supplier . ' - ' . $supplier->nama_supplier
@@ -108,9 +128,10 @@ class TransaksiPembelianResource extends Resource
                                 ->searchable()
                                 ->preload()
                                 ->required()
-                                ->live()
+                                ->live() // live() = trigger update saat nilai berubah
                                 ->afterStateUpdated(function (Set $set, $state) {
 
+                                    // Saat supplier dipilih → isi field nama & no HP otomatis
                                     if ($state) {
 
                                         $supplier = Supplier::find($state);
@@ -124,12 +145,17 @@ class TransaksiPembelianResource extends Resource
 
                                     } else {
 
+                                        // Saat supplier dikosongkan → reset nama & no HP
                                         $set('nama_supplier_display', null);
 
                                         $set('no_hp_supplier_display', null);
                                     }
                                 }),
 
+                            // --------------------------------------------------
+                            // NAMA SUPPLIER — hanya tampilan, tidak disimpan sendiri
+                            // dehydrated(false) = tidak dikirim ke database
+                            // --------------------------------------------------
                             TextInput::make('nama_supplier_display')
                                 ->label('Nama Supplier')
                                 ->disabled()
@@ -139,17 +165,24 @@ class TransaksiPembelianResource extends Resource
 
                         Grid::make(2)->schema([
 
+                            // Sama seperti nama, hanya tampilan
                             TextInput::make('no_hp_supplier_display')
                                 ->label('No HP Supplier')
                                 ->disabled()
                                 ->dehydrated(false),
 
+                            // --------------------------------------------------
+                            // METODE PEMBAYARAN
+                            // Tambah opsi baru → tambahkan di dalam ->options([...])
+                            // --------------------------------------------------
                             Select::make('metode_pembayaran')
                                 ->label('Metode Pembayaran')
                                 ->options([
                                     'tunai'    => 'Tunai',
                                     'transfer' => 'Transfer',
                                     'cek'      => 'Cek / Giro',
+                                    // Tambah metode baru di sini, contoh:
+                                    // 'qris' => 'QRIS',
                                 ])
                                 ->default('tunai')
                                 ->required()
@@ -159,20 +192,19 @@ class TransaksiPembelianResource extends Resource
 
                     ]),
 
-                /*
-                |--------------------------------------------------------------------------
-                | DETAIL PRODUK
-                |--------------------------------------------------------------------------
-                */
-
+                // =====================================================
+                // SECTION 3 — DETAIL PRODUK (REPEATER)
+                // Bisa tambah baris produk dinamis
+                // Setiap baris: nama produk, satuan, jumlah, harga, subtotal
+                // =====================================================
                 Section::make('Detail Produk Pembelian')
                     ->icon('heroicon-o-clipboard-document-list')
                     ->schema([
 
                         Repeater::make('detailTransaksi')
-                            ->relationship()
+                            ->relationship() // relasi ke model DetailTransaksiPembelian
                             ->label('')
-                            ->defaultItems(1)
+                            ->defaultItems(1) // jumlah baris awal saat form dibuka
                             ->collapsible()
                             ->reorderableWithButtons()
                             ->live()
@@ -180,11 +212,16 @@ class TransaksiPembelianResource extends Resource
 
                                 Grid::make(5)->schema([
 
+                                    // Nama produk, span 2 kolom dari 5
                                     TextInput::make('nama_produk')
                                         ->label('Nama Produk')
                                         ->required()
                                         ->columnSpan(2),
 
+                                    // ------------------------------------------
+                                    // SATUAN
+                                    // Tambah satuan baru → tambahkan di ->options([...])
+                                    // ------------------------------------------
                                     Select::make('satuan')
                                         ->label('Satuan')
                                         ->options([
@@ -196,22 +233,81 @@ class TransaksiPembelianResource extends Resource
                                             'liter'  => 'Liter',
                                             'botol'  => 'Botol',
                                             'pak'    => 'Pak',
+                                            // Tambah satuan baru di sini
                                         ])
                                         ->default('pcs')
                                         ->required()
                                         ->native(false),
 
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | JUMLAH
-                                    |--------------------------------------------------------------------------
-                                    */
-
+                                    // ------------------------------------------
+                                    // JUMLAH
+                                    // Saat berubah → hitung ulang subtotal & total
+                                    // live(onBlur: true) = update saat keluar dari field
+                                    // ------------------------------------------
                                     TextInput::make('jumlah')
                                         ->label('Jumlah')
                                         ->default(1)
                                         ->required()
                                         ->live(onBlur: true)
+                                        ->afterStateUpdated(function (Set $set, Get $get) {
+
+                                            $jumlah = (float) ($get('jumlah') ?? 0);
+
+                                            // Bersihkan format titik ribuan sebelum dihitung
+                                            $hargaSatuan = (float) preg_replace(
+                                                '/[^0-9]/',
+                                                '',
+                                                $get('harga_satuan') ?? 0
+                                            );
+
+                                            // Hitung subtotal baris ini
+                                            $subtotal = $jumlah * $hargaSatuan;
+                                            $set('subtotal', $subtotal);
+
+                                            // Ambil semua baris repeater, lalu sum subtotal-nya
+                                            // '../../detailTransaksi' = naik 2 level ke parent form
+                                            $items = $get('../../detailTransaksi') ?? [];
+
+                                            $total = collect($items)->sum(function ($item) {
+                                                return (float) ($item['subtotal'] ?? 0);
+                                            });
+
+                                            $set('../../total_harga', $total);
+
+                                            // Update kembalian setelah total berubah
+                                            $jumlahBayar = (float) preg_replace(
+                                                '/[^0-9]/',
+                                                '',
+                                                $get('../../jumlah_bayar') ?? 0
+                                            );
+
+                                            $set('../../kembalian', max(0, $jumlahBayar - $total));
+                                        }),
+
+                                    // ------------------------------------------
+                                    // HARGA SATUAN
+                                    // Format tampilan: Rp 1.000.000 (titik ribuan)
+                                    // Disimpan ke DB: 1000000 (tanpa titik)
+                                    // Logika hitung sama seperti jumlah di atas
+                                    // ------------------------------------------
+                                    TextInput::make('harga_satuan')
+                                        ->label('Harga Satuan (Rp)')
+                                        ->prefix('Rp')
+                                        ->required()
+                                        ->default(0)
+                                        ->numeric()
+                                        ->live(onBlur: true)
+
+                                        // Format saat ditampilkan: tambah titik ribuan
+                                        ->formatStateUsing(fn ($state) =>
+                                            $state ? number_format((float) $state, 0, ',', '.') : null
+                                        )
+
+                                        // Sebelum disimpan: hapus titik ribuan
+                                        ->dehydrateStateUsing(fn ($state) =>
+                                            preg_replace('/[^0-9]/', '', $state)
+                                        )
+
                                         ->afterStateUpdated(function (Set $set, Get $get) {
 
                                             $jumlah = (float) ($get('jumlah') ?? 0);
@@ -223,13 +319,11 @@ class TransaksiPembelianResource extends Resource
                                             );
 
                                             $subtotal = $jumlah * $hargaSatuan;
-
                                             $set('subtotal', $subtotal);
 
                                             $items = $get('../../detailTransaksi') ?? [];
 
                                             $total = collect($items)->sum(function ($item) {
-
                                                 return (float) ($item['subtotal'] ?? 0);
                                             });
 
@@ -244,69 +338,13 @@ class TransaksiPembelianResource extends Resource
                                             $set('../../kembalian', max(0, $jumlahBayar - $total));
                                         }),
 
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | HARGA SATUAN
-                                    |--------------------------------------------------------------------------
-                                    */
-TextInput::make('harga_satuan')
-    ->label('Harga Satuan (Rp)')
-    ->prefix('Rp')
-    ->required()
-    ->default(0)
-    ->numeric()
-    ->live(onBlur: true)
-
-    // format titik saat selesai input
-    ->formatStateUsing(fn ($state) =>
-        $state ? number_format((float) $state, 0, ',', '.') : null
-    )
-
-    // simpan tanpa titik
-    ->dehydrateStateUsing(fn ($state) =>
-        preg_replace('/[^0-9]/', '', $state)
-    )
-
-    ->afterStateUpdated(function (Set $set, Get $get) {
-
-        $jumlah = (float) ($get('jumlah') ?? 0);
-
-        $hargaSatuan = (float) preg_replace(
-            '/[^0-9]/',
-            '',
-            $get('harga_satuan') ?? 0
-        );
-
-        $subtotal = $jumlah * $hargaSatuan;
-
-        $set('subtotal', $subtotal);
-
-        $items = $get('../../detailTransaksi') ?? [];
-
-        $total = collect($items)->sum(function ($item) {
-
-            return (float) ($item['subtotal'] ?? 0);
-        });
-
-        $set('../../total_harga', $total);
-
-        $jumlahBayar = (float) preg_replace(
-            '/[^0-9]/',
-            '',
-            $get('../../jumlah_bayar') ?? 0
-        );
-
-        $set('../../kembalian', max(0, $jumlahBayar - $total));
-    }),
-
                                 ]),
 
-                                /*
-                                |--------------------------------------------------------------------------
-                                | SUBTOTAL
-                                |--------------------------------------------------------------------------
-                                */
-
+                                // ------------------------------------------
+                                // SUBTOTAL PER BARIS
+                                // Placeholder = hanya tampilan (tidak bisa diedit)
+                                // Hidden = yang benar-benar disimpan ke DB
+                                // ------------------------------------------
                                 Grid::make(2)->schema([
 
                                     Placeholder::make('subtotal_display')
@@ -323,6 +361,7 @@ TextInput::make('harga_satuan')
                                             );
                                         }),
 
+                                    // Nilai subtotal yang sesungguhnya disimpan di sini (tersembunyi)
                                     Hidden::make('subtotal')
                                         ->default(0)
                                         ->dehydrated(true),
@@ -330,28 +369,25 @@ TextInput::make('harga_satuan')
                                 ]),
 
                             ])
-                            ->addActionLabel('+ Tambah Produk'),
+                            ->addActionLabel('+ Tambah Produk'), // Ubah teks tombol tambah baris di sini
 
                     ]),
 
-                /*
-                |--------------------------------------------------------------------------
-                | RINGKASAN PEMBAYARAN
-                |--------------------------------------------------------------------------
-                */
-
+                // =====================================================
+                // SECTION 4 — RINGKASAN PEMBAYARAN
+                // Berisi: total harga, jumlah bayar, kembalian,
+                //         status pembayaran (auto), catatan
+                // =====================================================
                 Section::make('Ringkasan Pembayaran')
                     ->icon('heroicon-o-banknotes')
                     ->schema([
 
                         Grid::make(3)->schema([
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | TOTAL HARGA
-                            |--------------------------------------------------------------------------
-                            */
-
+                            // ------------------------------------------
+                            // TOTAL HARGA — hasil sum semua subtotal
+                            // Hanya tampilan (Placeholder), nilai asli di Hidden
+                            // ------------------------------------------
                             Placeholder::make('total_harga_display')
                                 ->label('Total Harga (Rp)')
                                 ->live()
@@ -370,12 +406,11 @@ TextInput::make('harga_satuan')
                                 ->default(0)
                                 ->dehydrated(true),
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | JUMLAH BAYAR
-                            |--------------------------------------------------------------------------
-                            */
-
+                            // ------------------------------------------
+                            // JUMLAH BAYAR — input dari user
+                            // Saat berubah → hitung kembalian & status
+                            // Format sama seperti harga_satuan (titik ribuan)
+                            // ------------------------------------------
                             TextInput::make('jumlah_bayar')
                                 ->label('Jumlah Bayar (Rp)')
                                 ->prefix('Rp')
@@ -384,9 +419,7 @@ TextInput::make('harga_satuan')
                                 ->live(onBlur: true)
 
                                 ->formatStateUsing(fn($state) =>
-                                    $state
-                                        ? number_format((float) $state, 0, ',', '.')
-                                        : null
+                                    $state ? number_format((float) $state, 0, ',', '.') : null
                                 )
 
                                 ->dehydrateStateUsing(fn($state) =>
@@ -403,34 +436,31 @@ TextInput::make('harga_satuan')
                                         $get('jumlah_bayar') ?? 0
                                     );
 
+                                    // Hitung kembalian, minimum 0 (tidak boleh minus)
                                     $set('kembalian', max(0, $jumlahBayar - $totalHarga));
 
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | STATUS PEMBAYARAN
-                                    |--------------------------------------------------------------------------
-                                    */
-
+                                    // ------------------------------------------
+                                    // LOGIKA STATUS PEMBAYARAN (auto)
+                                    // Ubah kondisi di sini jika perlu ganti aturan
+                                    // ------------------------------------------
                                     if ($jumlahBayar <= 0) {
-
+                                        // Belum bayar sama sekali
                                         $set('status_pembayaran', 'belum_lunas');
 
                                     } elseif ($jumlahBayar >= $totalHarga && $totalHarga > 0) {
-
+                                        // Bayar >= total → lunas
                                         $set('status_pembayaran', 'lunas');
 
                                     } else {
-
+                                        // Bayar sebagian → cicilan
                                         $set('status_pembayaran', 'cicilan');
                                     }
                                 }),
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | KEMBALIAN
-                            |--------------------------------------------------------------------------
-                            */
-
+                            // ------------------------------------------
+                            // KEMBALIAN — hanya tampilan
+                            // Dihitung otomatis dari jumlah_bayar - total_harga
+                            // ------------------------------------------
                             Placeholder::make('kembalian_display')
                                 ->label('Kembalian (Rp)')
                                 ->live()
@@ -461,12 +491,11 @@ TextInput::make('harga_satuan')
 
                         Grid::make(2)->schema([
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | STATUS PEMBAYARAN
-                            |--------------------------------------------------------------------------
-                            */
-
+                            // ------------------------------------------
+                            // STATUS PEMBAYARAN — hanya tampilan
+                            // Nilai diset otomatis oleh afterStateUpdated jumlah_bayar
+                            // Ubah emoji/teks → ganti di match() di bawah
+                            // ------------------------------------------
                             Placeholder::make('status_pembayaran_display')
                                 ->label('Status Pembayaran')
                                 ->live()
@@ -474,12 +503,11 @@ TextInput::make('harga_satuan')
 
                                     $status = $get('status_pembayaran');
 
+                                    // Ubah tampilan teks/emoji status di sini
                                     return match ($status) {
-
                                         'lunas'        => '✅ Lunas',
                                         'cicilan'      => '🔄 Cicilan',
                                         'belum_lunas'  => '❌ Belum Lunas',
-
                                         default => '-',
                                     };
                                 }),
@@ -488,12 +516,7 @@ TextInput::make('harga_satuan')
                                 ->default('belum_lunas')
                                 ->dehydrated(true),
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | CATATAN
-                            |--------------------------------------------------------------------------
-                            */
-
+                            // Catatan bebas, opsional
                             Textarea::make('catatan')
                                 ->label('Catatan')
                                 ->rows(2),
@@ -505,105 +528,85 @@ TextInput::make('harga_satuan')
             ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TABLE
-    |--------------------------------------------------------------------------
-    */
-
+    // =========================================================
+    // TABLE — halaman index/list semua transaksi
+    // =========================================================
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
 
+                // Kolom kode, bisa dicari & diurutkan
                 TextColumn::make('kode_pembelian')
                     ->label('Kode Pembelian')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
 
+                // Ubah format tanggal → ganti 'd M Y'
                 TextColumn::make('tanggal_pembelian')
                     ->label('Tanggal')
                     ->date('d M Y')
                     ->sortable(),
 
+                // Data dari relasi supplier
                 TextColumn::make('supplier.kode_supplier')
                     ->label('Kode Supplier'),
 
                 TextColumn::make('supplier.nama_supplier')
                     ->label('Nama Supplier'),
 
-                /*
-                |--------------------------------------------------------------------------
-                | JUMLAH ITEM
-                |--------------------------------------------------------------------------
-                */
+                // --------------------------------------------------
+                // JUMLAH ITEM — dihitung dari relasi detailTransaksi
+                // Bukan kolom di DB, dihitung manual via getStateUsing
+                // --------------------------------------------------
+                TextColumn::make('jumlah_item')
+                    ->label('Jml. Item')
+                    ->getStateUsing(function ($record) {
+                        // Sum kolom 'jumlah' dari semua baris detail transaksi ini
+                        return $record->detailTransaksi->sum('jumlah');
+                    })
+                    ->badge()
+                    ->color('info'),
 
-               TextColumn::make('jumlah_item')
-                ->label('Jml. Item')
-                ->getStateUsing(function ($record) {
-
-                    return $record->detailTransaksi->sum('jumlah');
-
-                })
-                ->badge()
-                ->color('info'),
-
-    
-   
-
-                /*
-                |--------------------------------------------------------------------------
-                | TOTAL HARGA
-                |--------------------------------------------------------------------------
-                */
-
+                // Format otomatis ke Rupiah (IDR)
                 TextColumn::make('total_harga')
                     ->label('Total Harga')
                     ->money('IDR', locale: 'id')
                     ->sortable(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | METODE PEMBAYARAN
-                |--------------------------------------------------------------------------
-                */
-
+                // --------------------------------------------------
+                // METODE PEMBAYARAN — badge warna
+                // Tambah warna baru → tambahkan di match() di bawah
+                // --------------------------------------------------
                 TextColumn::make('metode_pembayaran')
                     ->label('Metode')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-
                         'tunai'    => 'success',
                         'transfer' => 'info',
                         'cek'      => 'warning',
-
                         default => 'gray',
                     }),
 
-                /*
-                |--------------------------------------------------------------------------
-                | STATUS PEMBAYARAN
-                |--------------------------------------------------------------------------
-                */
-
+                // --------------------------------------------------
+                // STATUS PEMBAYARAN — badge warna + format teks
+                // Ubah warna → edit match() di color()
+                // Ubah teks label → edit match() di formatStateUsing()
+                // --------------------------------------------------
                 TextColumn::make('status_pembayaran')
                     ->label('Status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-
                         'lunas'        => 'success',
                         'cicilan'      => 'warning',
                         'belum_lunas'  => 'danger',
-
                         default => 'gray',
                     })
                     ->formatStateUsing(fn(string $state): string => match ($state) {
-
                         'lunas'        => 'Lunas',
                         'cicilan'      => 'Cicilan',
                         'belum_lunas'  => 'Belum Lunas',
-
                         default => $state,
                     }),
 
@@ -613,8 +616,12 @@ TextInput::make('harga_satuan')
 
             ])
 
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('created_at', 'desc') // Urutan default: terbaru di atas
 
+            // =====================================================
+            // FILTER — di pojok kanan atas tabel
+            // Tambah filter baru → tambahkan SelectFilter di sini
+            // =====================================================
             ->filters([
 
                 SelectFilter::make('status_pembayaran')
@@ -633,12 +640,14 @@ TextInput::make('harga_satuan')
 
             ])
 
+            // Tombol aksi per baris: View, Edit, Delete
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
 
+            // Tombol aksi untuk baris yang dicentang (bulk)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -651,6 +660,10 @@ TextInput::make('harga_satuan')
         return [];
     }
 
+    // =========================================================
+    // PAGES — mapping URL ke class halaman
+    // index = list, create = tambah baru, edit = ubah data
+    // =========================================================
     public static function getPages(): array
     {
         return [
