@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
@@ -23,4 +24,9 @@ class Customer extends Model
 
     // Memungkinkan semua kolom diisi secara mass-assignment[cite: 2]
     protected $guarded = [];
+
+    public function transaksiPenjualan(): HasMany
+    {
+        return $this->hasMany(TransaksiPenjualan::class, 'id_customer', 'id_customer');
+    }
 }
