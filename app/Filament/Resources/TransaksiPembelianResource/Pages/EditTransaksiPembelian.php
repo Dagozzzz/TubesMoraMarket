@@ -27,7 +27,6 @@ class EditTransaksiPembelian extends EditRecord
         $total       = (float) ($data['total_harga'] ?? 0);
         $jumlahBayar = (float) ($data['jumlah_bayar'] ?? 0);
 
-        // ✅ Status dihitung otomatis saat data disimpan ke DB
         if ($jumlahBayar <= 0) {
             $data['status_pembayaran'] = 'belum_lunas';
         } elseif ($jumlahBayar >= $total && $total > 0) {
@@ -39,5 +38,10 @@ class EditTransaksiPembelian extends EditRecord
         $data['kembalian'] = max(0, $jumlahBayar - $total);
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $this->record->buatJurnal();
     }
 }
