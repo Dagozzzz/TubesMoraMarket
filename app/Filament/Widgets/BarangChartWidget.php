@@ -7,12 +7,13 @@ use Filament\Widgets\ChartWidget;
 
 class BarangChartWidget extends ChartWidget
 {
+    protected static ?string $heading = 'Jumlah Barang per Kategori';
+
+    protected static ?int $sort = 1;
+
     protected int|string|array $columnSpan = 'full';
 
-    public function getHeading(): string
-    {
-        return 'Jumlah Barang per Kategori';
-    }
+    protected static ?string $maxHeight = '300px';
 
     protected function getData(): array
     {
@@ -21,6 +22,19 @@ class BarangChartWidget extends ChartWidget
             ->groupBy('kategori')
             ->orderByDesc('total')
             ->pluck('total', 'kategori');
+
+        if ($items->isEmpty()) {
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Jumlah Barang',
+                        'data' => [0],
+                        'backgroundColor' => ['#94a3b8'],
+                    ],
+                ],
+                'labels' => ['Belum ada data'],
+            ];
+        }
 
         return [
             'datasets' => [

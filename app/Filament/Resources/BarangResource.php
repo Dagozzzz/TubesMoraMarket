@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BarangResource\Pages;
-use App\Filament\Widgets\BarangAiAnalysisWidget;
 use App\Filament\Widgets\BarangChartWidget;
 use App\Filament\Widgets\BarangMaterialChart;
 use App\Models\Barang;
@@ -156,7 +155,6 @@ class BarangResource extends Resource
     public static function getWidgets(): array
     {
         return [
-            BarangAiAnalysisWidget::class,
             BarangChartWidget::class,
             BarangMaterialChart::class,
         ];

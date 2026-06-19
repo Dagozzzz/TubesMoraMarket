@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\BarangResource\Pages;
 
 use App\Filament\Resources\BarangResource;
-use App\Filament\Widgets\BarangAiAnalysisWidget;
 use App\Filament\Widgets\BarangChartWidget;
 use App\Filament\Widgets\BarangMaterialChart;
 use App\Models\Barang;
@@ -218,7 +217,6 @@ PROMPT;
     protected function getHeaderWidgets(): array
     {
         return [
-            BarangAiAnalysisWidget::class,
             BarangChartWidget::class,
             BarangMaterialChart::class,
         ];

@@ -7,12 +7,13 @@ use Filament\Widgets\ChartWidget;
 
 class BarangMaterialChart extends ChartWidget
 {
+    protected static ?string $heading = 'Top 10 Harga Jual Barang';
+
+    protected static ?int $sort = 2;
+
     protected int|string|array $columnSpan = 'full';
 
-    public function getHeading(): string
-    {
-        return 'Top 10 Harga Jual Barang';
-    }
+    protected static ?string $maxHeight = '350px';
 
     protected function getData(): array
     {
@@ -20,6 +21,19 @@ class BarangMaterialChart extends ChartWidget
             ->orderByDesc('harga_jual')
             ->limit(10)
             ->get(['nama_barang', 'harga_jual']);
+
+        if ($items->isEmpty()) {
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Harga Jual',
+                        'data' => [0],
+                        'backgroundColor' => '#94a3b8',
+                    ],
+                ],
+                'labels' => ['Belum ada data'],
+            ];
+        }
 
         return [
             'datasets' => [
@@ -49,6 +63,13 @@ class BarangMaterialChart extends ChartWidget
             'plugins' => [
                 'legend' => [
                     'display' => false,
+                ],
+            ],
+            'scales' => [
+                'x' => [
+                    'ticks' => [
+                        'callback' => 'function(value) { return "Rp " + value.toLocaleString("id-ID"); }',
+                    ],
                 ],
             ],
         ];
