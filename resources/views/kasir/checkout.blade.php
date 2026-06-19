@@ -97,6 +97,24 @@
                 <span class="cart-count">Sandbox</span>
             </div>
 
+            <div class="customer-box">
+                <label for="id_customer">Customer</label>
+                <select id="id_customer" name="id_customer" form="midtrans-payment-form" required>
+                    <option value="">Pilih customer</option>
+                    @foreach ($customers as $customer)
+                        <option value="{{ $customer->id_customer }}" @selected(old('id_customer', $selectedCustomerId) === $customer->id_customer)>
+                            {{ $customer->id_customer }} - {{ $customer->nama_customer }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('id_customer')
+                    <div class="error-text">{{ $message }}</div>
+                @enderror
+                @if ($customers->isEmpty())
+                    <div class="error-text">Belum ada master data customer. Tambahkan customer dulu dari admin.</div>
+                @endif
+            </div>
+
             <div class="cart-summary">
                 <div class="summary-row">
                     <span>Total item</span>
@@ -117,7 +135,7 @@
 
             @if ($snapToken)
                 <button class="btn btn-orange" id="pay-button" type="button" style="width: 100%; margin-top: 18px;">Bayar Sekarang</button>
-                <form method="POST" action="{{ route('kasir.checkout.pay') }}">
+                <form id="midtrans-payment-form" method="POST" action="{{ route('kasir.checkout.pay') }}">
                     @csrf
                     <button class="btn btn-ghost" type="submit" style="width: 100%; margin-top: 10px;">Buat Ulang Pembayaran</button>
                 </form>
@@ -125,7 +143,7 @@
                     <a class="btn btn-ghost" style="width: 100%; text-align: center; margin-top: 10px;" href="{{ $snapRedirectUrl }}" target="_blank" rel="noopener">Buka Halaman Midtrans</a>
                 @endif
             @else
-                <form method="POST" action="{{ route('kasir.checkout.pay') }}">
+                <form id="midtrans-payment-form" method="POST" action="{{ route('kasir.checkout.pay') }}">
                     @csrf
                     <button class="btn btn-orange" type="submit" style="width: 100%; margin-top: 18px;">Buat Pembayaran Midtrans</button>
                 </form>

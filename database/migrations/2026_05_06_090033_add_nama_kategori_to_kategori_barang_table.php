@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('kategori_barang', function (Blueprint $table) {
-            //
+            $table->string('nama_barang')->after('kode_kategori')->nullable();
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('kategori_barang', function (Blueprint $table) {
-            //
+            $table->dropColumn('nama_barang');
         });
     }
 };
