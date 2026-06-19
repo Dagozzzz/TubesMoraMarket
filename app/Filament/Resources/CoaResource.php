@@ -6,6 +6,7 @@ use App\Filament\Resources\CoaResource\Pages;
 use App\Models\ChartOfAccount;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class CoaResource extends Resource
 {
+    private const KODE_AKUN_COLUMN = 'kode_akun';
+
     protected static ?string $model = ChartOfAccount::class;
 
     protected static bool $shouldRegisterNavigation = true;
@@ -25,7 +28,7 @@ class CoaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->orderBy('kode_akun');
+        return parent::getEloquentQuery()->orderBy(self::KODE_AKUN_COLUMN);
     }
 
     public static function form(Form $form): Form
@@ -33,7 +36,7 @@ class CoaResource extends Resource
         return $form
             ->schema([
 
-                Forms\Components\TextInput::make('kode_akun')
+                Forms\Components\TextInput::make(self::KODE_AKUN_COLUMN)
                     ->label('Kode Akun')
                     ->required()
                     ->unique(ignoreRecord: true),
@@ -70,7 +73,7 @@ class CoaResource extends Resource
         return $table
             ->columns([
 
-                Tables\Columns\TextColumn::make('kode_akun')
+                Tables\Columns\TextColumn::make(self::KODE_AKUN_COLUMN)
                     ->label('Kode Akun')
                     ->searchable()
                     ->sortable(),
@@ -133,6 +136,18 @@ class CoaResource extends Resource
             'index' => Pages\ListCoas::route('/'),
             'create' => Pages\CreateCoa::route('/create'),
             'edit' => Pages\EditCoa::route('/{record}/edit'),
+            'buku-besar' => Pages\BukuBesar::route('/buku-besar'),
+        ];
+    }
+
+    public static function getNavigationItems(): array
+    {
+        return [
+            ...parent::getNavigationItems(),
+            NavigationItem::make('Buku Besar')
+                ->url(static::getUrl('buku-besar'))
+                ->icon('heroicon-o-book-open')
+                ->group('Master Data'),
         ];
     }
 }

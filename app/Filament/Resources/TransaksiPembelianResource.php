@@ -180,7 +180,7 @@ class TransaksiPembelianResource extends Resource
                                 ->options([
                                     'tunai'    => 'Tunai',
                                     'transfer' => 'Transfer',
-                                    'cek'      => 'Cek / Giro',
+
                                     // Tambah metode baru di sini, contoh:
                                     // 'qris' => 'QRIS',
                                 ])
@@ -274,14 +274,11 @@ class TransaksiPembelianResource extends Resource
 
                                             $set('../../total_harga', $total);
 
-                                            // Update kembalian setelah total berubah
-                                            $jumlahBayar = (float) preg_replace(
-                                                '/[^0-9]/',
-                                                '',
-                                                $get('../../jumlah_bayar') ?? 0
-                                            );
-
-                                            $set('../../kembalian', max(0, $jumlahBayar - $total));
+                                            // Reset jumlah_bayar & kembalian saat total berubah
+                                            // agar user harus input ulang nominal bayar
+                                            $set('../../jumlah_bayar', null);
+                                            $set('../../kembalian', 0);
+                                            $set('../../status_pembayaran', 'lunas');
                                         }),
 
                                     // ------------------------------------------
@@ -329,13 +326,10 @@ class TransaksiPembelianResource extends Resource
 
                                             $set('../../total_harga', $total);
 
-                                            $jumlahBayar = (float) preg_replace(
-                                                '/[^0-9]/',
-                                                '',
-                                                $get('../../jumlah_bayar') ?? 0
-                                            );
-
-                                            $set('../../kembalian', max(0, $jumlahBayar - $total));
+                                            // Reset jumlah_bayar & kembalian saat total berubah
+                                            $set('../../jumlah_bayar', null);
+                                            $set('../../kembalian', 0);
+                                            $set('../../status_pembayaran', 'lunas');
                                         }),
 
                                 ]),
@@ -376,7 +370,12 @@ class TransaksiPembelianResource extends Resource
                 // =====================================================
                 // SECTION 4 — RINGKASAN PEMBAYARAN
                 // Berisi: total harga, jumlah bayar, kembalian,
-                //         status pembayaran (auto), catatan
+                //         status pembayaran (selalu lunas), catatan
+                //
+                // LOGIKA BARU:
+                // - Supplier WAJIB melunasi penuh saat transaksi
+                // - Jumlah bayar tidak boleh kurang dari total harga
+                // - Tidak ada opsi cicilan / belum lunas
                 // =====================================================
                 Section::make('Ringkasan Pembayaran')
                     ->icon('heroicon-o-banknotes')
@@ -408,8 +407,8 @@ class TransaksiPembelianResource extends Resource
 
                             // ------------------------------------------
                             // JUMLAH BAYAR — input dari user
-                            // Saat berubah → hitung kembalian & status
-                            // Format sama seperti harga_satuan (titik ribuan)
+                            // WAJIB >= total_harga (tidak boleh kurang)
+                            // Kembalian dihitung jika bayar lebih dari total
                             // ------------------------------------------
                             TextInput::make('jumlah_bayar')
                                 ->label('Jumlah Bayar (Rp)')
@@ -418,11 +417,34 @@ class TransaksiPembelianResource extends Resource
                                 ->required()
                                 ->live(onBlur: true)
 
-                                ->formatStateUsing(fn($state) =>
+                                // ------------------------------------------
+                                // VALIDASI: jumlah_bayar harus >= total_harga
+                                // Jika kurang → form tidak bisa disimpan
+                                // ------------------------------------------
+                                ->rules([
+                                    fn (Get $get): \Closure => function (
+                                        string $attribute,
+                                        $value,
+                                        \Closure $fail
+                                    ) use ($get) {
+                                        $jumlahBayar = (float) preg_replace('/[^0-9]/', '', $value ?? 0);
+                                        $totalHarga  = (float) ($get('total_harga') ?? 0);
+
+                                        if ($totalHarga > 0 && $jumlahBayar < $totalHarga) {
+                                            $fail(
+                                                'Jumlah bayar harus minimal Rp '
+                                                . number_format($totalHarga, 0, ',', '.')
+                                                . '. Pembayaran harus dilunasi penuh.'
+                                            );
+                                        }
+                                    },
+                                ])
+
+                                ->formatStateUsing(fn ($state) =>
                                     $state ? number_format((float) $state, 0, ',', '.') : null
                                 )
 
-                                ->dehydrateStateUsing(fn($state) =>
+                                ->dehydrateStateUsing(fn ($state) =>
                                     preg_replace('/[^0-9]/', '', $state)
                                 )
 
@@ -436,30 +458,18 @@ class TransaksiPembelianResource extends Resource
                                         $get('jumlah_bayar') ?? 0
                                     );
 
-                                    // Hitung kembalian, minimum 0 (tidak boleh minus)
-                                    $set('kembalian', max(0, $jumlahBayar - $totalHarga));
+                                    // Hitung kembalian (boleh lebih, tidak boleh minus)
+                                    $kembalian = max(0, $jumlahBayar - $totalHarga);
+                                    $set('kembalian', $kembalian);
 
-                                    // ------------------------------------------
-                                    // LOGIKA STATUS PEMBAYARAN (auto)
-                                    // Ubah kondisi di sini jika perlu ganti aturan
-                                    // ------------------------------------------
-                                    if ($jumlahBayar <= 0) {
-                                        // Belum bayar sama sekali
-                                        $set('status_pembayaran', 'belum_lunas');
-
-                                    } elseif ($jumlahBayar >= $totalHarga && $totalHarga > 0) {
-                                        // Bayar >= total → lunas
-                                        $set('status_pembayaran', 'lunas');
-
-                                    } else {
-                                        // Bayar sebagian → cicilan
-                                        $set('status_pembayaran', 'cicilan');
-                                    }
+                                    // Status selalu lunas — tidak ada cicilan / belum lunas
+                                    $set('status_pembayaran', 'lunas');
                                 }),
 
                             // ------------------------------------------
                             // KEMBALIAN — hanya tampilan
-                            // Dihitung otomatis dari jumlah_bayar - total_harga
+                            // Dihitung otomatis: jumlah_bayar - total_harga
+                            // Jika bayar pas → kembalian Rp 0
                             // ------------------------------------------
                             Placeholder::make('kembalian_display')
                                 ->label('Kembalian (Rp)')
@@ -492,28 +502,19 @@ class TransaksiPembelianResource extends Resource
                         Grid::make(2)->schema([
 
                             // ------------------------------------------
-                            // STATUS PEMBAYARAN — hanya tampilan
-                            // Nilai diset otomatis oleh afterStateUpdated jumlah_bayar
-                            // Ubah emoji/teks → ganti di match() di bawah
+                            // STATUS PEMBAYARAN — selalu LUNAS
+                            // Tidak ada opsi cicilan / belum lunas
                             // ------------------------------------------
                             Placeholder::make('status_pembayaran_display')
                                 ->label('Status Pembayaran')
                                 ->live()
                                 ->content(function (Get $get): string {
-
-                                    $status = $get('status_pembayaran');
-
-                                    // Ubah tampilan teks/emoji status di sini
-                                    return match ($status) {
-                                        'lunas'        => '✅ Lunas',
-                                        'cicilan'      => '🔄 Cicilan',
-                                        'belum_lunas'  => '❌ Belum Lunas',
-                                        default => '-',
-                                    };
+                                    // Status selalu lunas, tidak ada kondisi lain
+                                    return '✅ Lunas';
                                 }),
 
                             Hidden::make('status_pembayaran')
-                                ->default('belum_lunas')
+                                ->default('lunas') // default lunas
                                 ->dehydrated(true),
 
                             // Catatan bebas, opsional
@@ -582,31 +583,25 @@ class TransaksiPembelianResource extends Resource
                 TextColumn::make('metode_pembayaran')
                     ->label('Metode')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'tunai'    => 'success',
                         'transfer' => 'info',
                         'cek'      => 'warning',
-                        default => 'gray',
+                        default    => 'gray',
                     }),
 
                 // --------------------------------------------------
-                // STATUS PEMBAYARAN — badge warna + format teks
-                // Ubah warna → edit match() di color()
-                // Ubah teks label → edit match() di formatStateUsing()
+                // STATUS PEMBAYARAN — selalu lunas, badge hijau
                 // --------------------------------------------------
                 TextColumn::make('status_pembayaran')
                     ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'lunas'        => 'success',
-                        'cicilan'      => 'warning',
-                        'belum_lunas'  => 'danger',
+                    ->color(fn (string $state): string => match ($state) {
+                        'lunas' => 'success',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
-                        'lunas'        => 'Lunas',
-                        'cicilan'      => 'Cicilan',
-                        'belum_lunas'  => 'Belum Lunas',
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'lunas' => 'Lunas',
                         default => $state,
                     }),
 
@@ -620,16 +615,9 @@ class TransaksiPembelianResource extends Resource
 
             // =====================================================
             // FILTER — di pojok kanan atas tabel
-            // Tambah filter baru → tambahkan SelectFilter di sini
+            // Filter status dihapus karena selalu lunas
             // =====================================================
             ->filters([
-
-                SelectFilter::make('status_pembayaran')
-                    ->options([
-                        'lunas'        => 'Lunas',
-                        'cicilan'      => 'Cicilan',
-                        'belum_lunas'  => 'Belum Lunas',
-                    ]),
 
                 SelectFilter::make('metode_pembayaran')
                     ->options([
