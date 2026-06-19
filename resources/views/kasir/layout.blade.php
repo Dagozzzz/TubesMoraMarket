@@ -336,6 +336,31 @@
             background: var(--soft);
             word-break: break-word;
         }
+        .customer-box {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 14px;
+            background: #fff;
+            margin-bottom: 16px;
+        }
+        .customer-box label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        .customer-box select {
+            width: 100%;
+            min-height: 48px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+            color: var(--ink);
+            padding: 0 12px;
+            outline: none;
+        }
+        .customer-box select:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 4px rgba(10, 124, 110, .1);
+        }
         .payment-note {
             margin: 14px 0 0;
             line-height: 1.55;

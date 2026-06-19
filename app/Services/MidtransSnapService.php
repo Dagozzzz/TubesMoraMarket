@@ -8,7 +8,7 @@ use RuntimeException;
 
 class MidtransSnapService
 {
-    public function createTransaction(array $cart, array $summary, array $customer): array
+    public function createTransaction(array $cart, array $summary, array $customer, ?string $orderId = null): array
     {
         $serverKey = config('services.midtrans.server_key');
 
@@ -16,7 +16,7 @@ class MidtransSnapService
             throw new RuntimeException('Server key Midtrans belum tersedia.');
         }
 
-        $orderId = 'MORA-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(5));
+        $orderId ??= 'MORA-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(5));
         $endpoint = rtrim(config('services.midtrans.snap_url'), '/') . '/snap/v1/transactions';
 
         $payload = [
