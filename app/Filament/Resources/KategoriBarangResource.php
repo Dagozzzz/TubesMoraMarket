@@ -4,19 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\KategoriBarangResource\Pages;
 use App\Models\KategoriBarang;
-use Filament\Forms;
+use Filament\Forms\Components\Select; // tambahan
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-
-// Komponen form
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select; // tambahan
-
-// Komponen kolom tabel
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn; // tambahan
+use Filament\Tables\Table;
 
 class KategoriBarangResource extends Resource
 {
@@ -51,12 +45,12 @@ class KategoriBarangResource extends Resource
                 Select::make('jenis_kategori')
                     ->label('Jenis Kategori')
                     ->options([
-                        'Elektronik'        => 'Elektronik',
-                        'Pakaian'           => 'Pakaian',
+                        'Elektronik' => 'Elektronik',
+                        'Pakaian' => 'Pakaian',
                         'Makanan & Minuman' => 'Makanan & Minuman',
-                        'Perabot Rumah'     => 'Perabot Rumah',
-                        'Olahraga'          => 'Olahraga',
-                        'Lainnya'           => 'Lainnya',
+                        'Perabot Rumah' => 'Perabot Rumah',
+                        'Olahraga' => 'Olahraga',
+                        'Lainnya' => 'Lainnya',
                     ])
                     ->searchable()
                     ->required(),

@@ -5,18 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class COA extends Model
+class JournalEntry extends Model
 {
-    protected $table = 'chart_of_accounts';
-
     protected $fillable = [
-        'kode_akun',
-        'nama_akun',
-        'kategori',
-        'saldo_normal',
+        'nomor_jurnal',
+        'tanggal',
+        'keterangan',
+        'status',
     ];
 
-    public function journalLines(): HasMany
+    protected $casts = [
+        'tanggal' => 'date',
+    ];
+
+    public function lines(): HasMany
     {
         return $this->hasMany(JournalLine::class);
     }

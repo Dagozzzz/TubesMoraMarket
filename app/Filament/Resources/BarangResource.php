@@ -12,7 +12,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -98,16 +97,17 @@ class BarangResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                BadgeColumn::make('kategori')
+                TextColumn::make('kategori')
                     ->label('Kategori')
-                    ->colors([
-                        'primary' => 'Elektronik',
-                        'success' => 'Pakaian',
-                        'warning' => 'Makanan & Minuman',
-                        'info' => 'Perabot Rumah',
-                        'danger' => 'Olahraga',
-                        'gray' => 'Lainnya',
-                    ]),
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'Elektronik' => 'primary',
+                        'Pakaian' => 'success',
+                        'Makanan & Minuman' => 'warning',
+                        'Perabot Rumah' => 'info',
+                        'Olahraga' => 'danger',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('satuan')
                     ->label('Satuan'),
