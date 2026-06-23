@@ -4,7 +4,6 @@ namespace App\Filament\Resources\CoaResource\Pages;
 
 use App\Filament\Resources\CoaResource;
 use App\Models\ChartOfAccount;
-use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -18,36 +17,19 @@ class BukuBesar extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    private const KODE_AKUN_COLUMN = 'kode_akun';
-
-    private const CHART_OF_ACCOUNT_ID_COLUMN = 'chart_of_account_id';
-
     protected static string $resource = CoaResource::class;
+    protected static string $view     = 'filament.resources.coa-resource.pages.buku-besar';
+    protected static ?string $title   = 'Buku Besar';
 
-    protected static string $view = 'filament.resources.coa-resource.pages.buku-besar';
-
-    protected static ?string $title = 'Buku Besar';
-
-    protected static ?string $navigationLabel = 'Buku Besar';
-
-    public ?string $kode_akun = null;
-
-    public ?string $tanggal_dari = null;
-
+    public ?string $kode_akun      = null;
+    public ?string $tanggal_dari   = null;
     public ?string $tanggal_sampai = null;
 
-    public ?string $saldo_normal = null;
-
-    /** @var Collection<int, JournalLine> */
     public Collection $lines;
-
-    public float $saldo_awal = 0;
-
-    public float $total_debit = 0;
-
+    public float $total_debit  = 0;
     public float $total_kredit = 0;
-
-    public float $saldo_akhir = 0;
+    public float $saldo_akhir  = 0;
+    public ?ChartOfAccount $coa = null;
 
     public function mount(): void
     {
@@ -59,15 +41,14 @@ class BukuBesar extends Page implements HasForms
     {
         return $form
             ->schema([
-                Select::make(self::KODE_AKUN_COLUMN)
+                Select::make('kode_akun')
                     ->label('Akun')
                     ->options(
-                        ChartOfAccount::orderBy(self::KODE_AKUN_COLUMN)
+                        ChartOfAccount::orderBy('kode_akun')
                             ->get()
-                            ->mapWithKeys(fn (ChartOfAccount $coa): array => [
-                                $coa->kode_akun => "{$coa->kode_akun} - {$coa->nama_akun}",
+                            ->mapWithKeys(fn($coa) => [
+                                $coa->kode_akun => "{$coa->kode_akun} - {$coa->nama_akun}"
                             ])
-                            ->all()
                     )
                     ->searchable()
                     ->required(),
@@ -85,39 +66,32 @@ class BukuBesar extends Page implements HasForms
 
     public function tampilkan(): void
     {
-        $this->form->validate();
+        $this->validate([
+            'kode_akun'      => 'required',
+            'tanggal_dari'   => 'required|date',
+            'tanggal_sampai' => 'required|date|after_or_equal:tanggal_dari',
+        ]);
 
-        $coa = ChartOfAccount::where(self::KODE_AKUN_COLUMN, $this->kode_akun)->first();
+        $this->coa = ChartOfAccount::where('kode_akun', $this->kode_akun)->first();
 
-        if (! $coa) {
-            return;
-        }
+        if (!$this->coa) return;
 
-        $this->saldo_normal = $coa->saldo_normal;
-
-        // Ambil semua lines untuk akun ini dalam rentang tanggal
         $this->lines = JournalLine::with('journalEntry')
-            ->where(self::CHART_OF_ACCOUNT_ID_COLUMN, $coa->id)
+            ->where('chart_of_account_id', $this->coa->id)
             ->whereHas('journalEntry', function ($q) {
                 $q->whereBetween('tanggal', [$this->tanggal_dari, $this->tanggal_sampai])
-                    ->where('status', 'posted');
+                  ->where('status', 'posted');
             })
-            ->orderBy(
-                JournalEntry::select('tanggal')
-                    ->whereColumn('id', 'journal_lines.journal_entry_id'),
-                'asc'
-            )
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+            ->orderBy('journal_entries.tanggal', 'asc')
+            ->orderBy('journal_entries.id', 'asc')
+            ->select('journal_lines.*')
             ->get();
 
-        $this->total_debit = $this->lines->sum(
-            fn (JournalLine $line): float => (float) $line->debit
-        );
-        $this->total_kredit = $this->lines->sum(
-            fn (JournalLine $line): float => (float) $line->kredit
-        );
+        $this->total_debit  = (float) $this->lines->sum('debit');
+        $this->total_kredit = (float) $this->lines->sum('kredit');
 
-        // Hitung saldo akhir berdasarkan saldo normal
-        if ($coa->saldo_normal === 'Debit') {
+        if ($this->coa->saldo_normal === 'Debit') {
             $this->saldo_akhir = $this->total_debit - $this->total_kredit;
         } else {
             $this->saldo_akhir = $this->total_kredit - $this->total_debit;

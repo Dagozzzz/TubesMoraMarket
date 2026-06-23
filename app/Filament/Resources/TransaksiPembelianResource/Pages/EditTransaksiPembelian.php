@@ -40,6 +40,7 @@ class EditTransaksiPembelian extends EditRecord
         return $data;
     }
 
+    // ← otomatis update jurnal saat transaksi diedit
     protected function afterSave(): void
     {
         $this->record->buatJurnal();

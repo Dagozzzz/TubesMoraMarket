@@ -18,4 +18,13 @@ class CreateReturnPembelian extends CreateRecord
     {
         return 'Return pembelian berhasil dibuat';
     }
+
+    /**
+     * Otomatis buat jurnal setelah return pembelian disimpan.
+     * Jurnal hanya benar-benar ditulis jika status = 'disetujui'.
+     */
+    protected function afterCreate(): void
+    {
+        $this->record->buatJurnal();
+    }
 }

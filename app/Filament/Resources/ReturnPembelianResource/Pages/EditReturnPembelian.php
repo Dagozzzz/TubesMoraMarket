@@ -27,4 +27,14 @@ class EditReturnPembelian extends EditRecord
     {
         return 'Return pembelian berhasil diperbarui';
     }
+
+    /**
+     * Otomatis perbarui jurnal saat return pembelian diedit.
+     * - Jika status = 'disetujui' → jurnal dibuat / diperbarui
+     * - Jika status lain → jurnal lama dihapus
+     */
+    protected function afterSave(): void
+    {
+        $this->record->buatJurnal();
+    }
 }

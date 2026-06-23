@@ -37,6 +37,7 @@ class CreateTransaksiPembelian extends CreateRecord
         return $data;
     }
 
+    // ← otomatis buat jurnal setelah transaksi disimpan
     protected function afterCreate(): void
     {
         $this->record->buatJurnal();
