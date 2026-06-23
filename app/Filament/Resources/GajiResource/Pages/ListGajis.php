@@ -6,7 +6,7 @@ use App\Filament\Resources\GajiResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListGaji extends ListRecords
+class ListGajis extends ListRecords
 {
     protected static string $resource = GajiResource::class;
 

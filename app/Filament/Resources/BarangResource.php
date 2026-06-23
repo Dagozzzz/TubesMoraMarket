@@ -3,8 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BarangResource\Pages;
-use App\Filament\Widgets\BarangChartWidget;
-use App\Filament\Widgets\BarangMaterialChart;
 use App\Models\Barang;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
@@ -152,11 +150,11 @@ class BarangResource extends Resource
         ];
     }
 
+    // Widget barang TIDAK didaftarkan di sini (getWidgets() di Resource
+    // mendaftarkan ke panel global sehingga ikut muncul di Dashboard utama).
+    // Chart ditampilkan melalui ListBarangs::getHeaderWidgets() secara lokal.
     public static function getWidgets(): array
     {
-        return [
-            BarangChartWidget::class,
-            BarangMaterialChart::class,
-        ];
+        return [];
     }
 }

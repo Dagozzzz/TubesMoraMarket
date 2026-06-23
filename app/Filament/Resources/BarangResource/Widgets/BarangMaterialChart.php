@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Resources\BarangResource\Widgets;
 
 use App\Models\Barang;
 use Filament\Widgets\ChartWidget;
