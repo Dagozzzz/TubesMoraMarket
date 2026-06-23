@@ -3,21 +3,17 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BarangResource\Pages;
+use App\Filament\Widgets\BarangChartWidget;
+use App\Filament\Widgets\BarangMaterialChart;
 use App\Models\Barang;
-use Filament\Forms;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-
-// Form Components
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Grid;
-
-// Table Components
 use Filament\Tables\Columns\TextColumn;
-
+use Filament\Tables\Table;
 
 class BarangResource extends Resource
 {
@@ -36,47 +32,40 @@ class BarangResource extends Resource
         return $form
             ->schema([
                 Grid::make(2)->schema([
-                   TextInput::make('kode_barang')
-                   ->label('Kode Barang')
-                   ->default(function () {
-                     $lastBarang = Barang::orderBy('id', 'desc')->first();
-                     if ($lastBarang) {
-                        $lastNumber = (int) substr($lastBarang->kode_barang, 3);
-                        $newNumber = $lastNumber + 1;
-                        } else {
-                            $newNumber = 1;
-                            }
-                            return 'BRG' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-                            })
-                            ->disabled(),
+                    TextInput::make('kode_barang')
+                        ->label('Kode Barang')
+                        ->default(fn (): string => Barang::generateKodeBarang())
+                        ->disabled()
+                        ->dehydrated(false),
 
                     TextInput::make('nama_barang')
                         ->label('Nama Barang')
-                        ->required(),
+                        ->required()
+                        ->maxLength(255),
 
                     Select::make('kategori')
                         ->label('Kategori')
                         ->options([
-                            'Elektronik'        => 'Elektronik',
-                            'Pakaian'           => 'Pakaian',
+                            'Elektronik' => 'Elektronik',
+                            'Pakaian' => 'Pakaian',
                             'Makanan & Minuman' => 'Makanan & Minuman',
-                            'Perabot Rumah'     => 'Perabot Rumah',
-                            'Olahraga'          => 'Olahraga',
-                            'Lainnya'           => 'Lainnya',
+                            'Perabot Rumah' => 'Perabot Rumah',
+                            'Olahraga' => 'Olahraga',
+                            'Lainnya' => 'Lainnya',
                         ])
                         ->required(),
 
-                   Select::make('satuan')
-                   ->label('Satuan')
-                    ->options([
-                        'pcs'  => 'pcs',
-                        'box'  => 'box',
-                        'pack' => 'pack',
-                        'lusin'=> 'lusin',
-                        'kg'   => 'kg',
-                        'liter'=> 'liter',
+                    Select::make('satuan')
+                        ->label('Satuan')
+                        ->options([
+                            'pcs' => 'pcs',
+                            'box' => 'box',
+                            'pack' => 'pack',
+                            'lusin' => 'lusin',
+                            'kg' => 'kg',
+                            'liter' => 'liter',
                         ])
-                        ->searchable()
+                        ->native()
                         ->required(),
 
                     TextInput::make('harga_beli')
@@ -89,9 +78,8 @@ class BarangResource extends Resource
                         ->label('Harga Jual')
                         ->numeric()
                         ->prefix('Rp')
-                        ->numeric()
                         ->required(),
-                ])
+                ]),
             ]);
     }
 
@@ -111,39 +99,37 @@ class BarangResource extends Resource
 
                 TextColumn::make('kategori')
                     ->label('Kategori')
-                    ->colors([
-                        'primary' => 'Elektronik',
-                        'success' => 'Pakaian',
-                        'warning' => 'Makanan & Minuman',
-                        'info'    => 'Perabot Rumah',
-                        'danger'  => 'Olahraga',
-                        'gray'    => 'Lainnya',
-                    ]),
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'Elektronik' => 'primary',
+                        'Pakaian' => 'success',
+                        'Makanan & Minuman' => 'warning',
+                        'Perabot Rumah' => 'info',
+                        'Olahraga' => 'danger',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('satuan')
                     ->label('Satuan'),
 
                 TextColumn::make('harga_beli')
                     ->label('Harga Beli')
-                    // ->money('IDR', true)
-                    ->prefix('Rp')
-                    ->numeric()
+                    ->money('IDR')
                     ->sortable(),
 
                 TextColumn::make('harga_jual')
                     ->label('Harga Jual')
-                    // ->money('IDR', true)
-                    ->prefix('Rp')
-                    ->numeric()
+                    ->money('IDR')
+                    ->sortable(),
+
+                TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y')
                     ->sortable(),
             ])
-            ->filters([
-                //
-            ])
+            ->defaultSort('created_at', 'desc')
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -154,9 +140,7 @@ class BarangResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -167,5 +151,12 @@ class BarangResource extends Resource
             'edit' => Pages\EditBarang::route('/{record}/edit'),
         ];
     }
-}
 
+    public static function getWidgets(): array
+    {
+        return [
+            BarangChartWidget::class,
+            BarangMaterialChart::class,
+        ];
+    }
+}

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
     {
         $now = now();
 
+<<<<<<< HEAD
         DB::table('kategori_supplier')->insert([
             [
                 'id_kategori' => 'KS001',
@@ -195,5 +196,15 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(SalesDashboardSeeder::class);
+=======
+        // \App\Models\User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+
+        $this->call([
+            ChartOfAccountSeeder::class,
+        ]);
+>>>>>>> 30e18ec61165785859429a03d61923966881af1f
     }
 }
