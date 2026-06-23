@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\BarangResource\Pages;
 
 use App\Filament\Resources\BarangResource;
-use App\Filament\Widgets\BarangChartWidget;
-use App\Filament\Widgets\BarangMaterialChart;
+use App\Filament\Resources\BarangResource\Widgets\BarangChartWidget;
+use App\Filament\Resources\BarangResource\Widgets\BarangMaterialChart;
 use App\Models\Barang;
 use App\Models\BarangAiAnalysis;
 use Filament\Actions;
