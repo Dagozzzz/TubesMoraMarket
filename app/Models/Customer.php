@@ -11,7 +11,7 @@ class Customer extends Model
     use HasFactory;
 
     // Nama tabel yang digunakan di database[cite: 2]
-    protected $table = 'customers';
+    protected $table = 'customer';
 
     // Menentukan primary key kustom[cite: 2]
     protected $primaryKey = 'id_customer';
