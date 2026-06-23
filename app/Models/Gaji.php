@@ -33,7 +33,7 @@ class Gaji extends Model
     // Fungsi otomatis membuat no_slip
     public static function getNoSlip()
     {
-        $sql = "SELECT IFNULL(MAX(no_slip), 'SLP-0000000') as no_slip FROM gajis";
+        $sql = "SELECT IFNULL(MAX(no_slip), 'SLP-0000000') as no_slip FROM gaji";
         $kode = DB::select($sql);
 
         foreach ($kode as $k) {

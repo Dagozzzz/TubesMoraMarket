@@ -376,7 +376,7 @@ class GajiResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListGajis::route('/'),
+            'index' => Pages\ListGaji::route('/'),
             'create' => Pages\CreateGaji::route('/create'),
             'edit' => Pages\EditGaji::route('/{record}/edit'),
         ];
