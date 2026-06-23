@@ -1,6 +1,5 @@
 <x-filament-panels::page>
 
-    {{-- Filter Form --}}
     <x-filament::section>
         <form wire:submit="tampilkan">
             {{ $this->form }}
@@ -12,9 +11,19 @@
         </form>
     </x-filament::section>
 
-    {{-- Tabel Buku Besar --}}
-    @if ($lines->isNotEmpty())
+    @if ($coa && $lines->isNotEmpty())
+
         <x-filament::section>
+            <div class="mb-3">
+                <p class="font-semibold text-gray-700 dark:text-gray-200">
+                    {{ $coa->kode_akun }} - {{ $coa->nama_akun }}
+                </p>
+                <p class="text-sm text-gray-500">
+                    Periode: {{ \Carbon\Carbon::parse($tanggal_dari)->format('d/m/Y') }}
+                    s/d {{ \Carbon\Carbon::parse($tanggal_sampai)->format('d/m/Y') }}
+                </p>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-sm border-collapse">
                     <thead>
@@ -31,7 +40,7 @@
                         @php $saldo_berjalan = 0; @endphp
                         @foreach ($lines as $line)
                             @php
-                                if ($saldo_normal === 'Debit') {
+                                if ($coa->saldo_normal === 'Debit') {
                                     $saldo_berjalan += $line->debit - $line->kredit;
                                 } else {
                                     $saldo_berjalan += $line->kredit - $line->debit;
@@ -48,22 +57,16 @@
                                     {{ $line->keterangan ?? $line->journalEntry->keterangan }}
                                 </td>
                                 <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-right">
-                                    @if ($line->debit > 0)
-                                        {{ number_format($line->debit, 2, ',', '.') }}
-                                    @else
-                                        -
-                                    @endif
+                                    {{ $line->debit > 0 ? number_format($line->debit, 2, ',', '.') : '-' }}
                                 </td>
                                 <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-right">
-                                    @if ($line->kredit > 0)
-                                        {{ number_format($line->kredit, 2, ',', '.') }}
-                                    @else
-                                        -
-                                    @endif
+                                    {{ $line->kredit > 0 ? number_format($line->kredit, 2, ',', '.') : '-' }}
                                 </td>
                                 <td class="border border-gray-300 dark:border-gray-600 px-3 py-2 text-right font-medium">
                                     {{ number_format(abs($saldo_berjalan), 2, ',', '.') }}
-                                    {{ $saldo_berjalan < 0 ? '(K)' : '' }}
+                                    @if ($saldo_berjalan < 0)
+                                        <span class="text-red-500 text-xs">(K)</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -87,9 +90,12 @@
                 </table>
             </div>
         </x-filament::section>
-    @elseif ($lines->isEmpty() && $kode_akun)
+
+    @elseif ($coa && $lines->isEmpty())
         <x-filament::section>
-            <p class="text-gray-500 text-center py-4">Tidak ada transaksi untuk akun dan periode ini.</p>
+            <p class="text-gray-500 text-center py-4">
+                Tidak ada transaksi untuk akun <strong>{{ $coa->nama_akun }}</strong> pada periode ini.
+            </p>
         </x-filament::section>
     @endif
 

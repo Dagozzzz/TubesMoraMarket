@@ -24,9 +24,18 @@ class EditTransaksiPenjualan extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $total = collect($this->data['detailTransaksi'] ?? [])->sum(fn ($item) => (float) ($item['subtotal'] ?? 0));
+        $total = collect($this->data['detailTransaksi'] ?? [])
+            ->sum(fn($item) => (float) ($item['subtotal'] ?? 0));
+
         $data['total_harga'] = $total;
 
         return $data;
     }
+
+    // otomatis update jurnal saat penjualan diedit
+    protected function afterSave(): void
+    {
+        $this->record->buatJurnal();
+    }
 }
+

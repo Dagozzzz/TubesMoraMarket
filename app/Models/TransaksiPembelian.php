@@ -5,20 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
-/**
- * @property int $id
- * @property string $kode_pembelian
- * @property int $id_supplier
- * @property Carbon $tanggal_pembelian
- * @property string $status_pembayaran
- * @property string $metode_pembayaran
- * @property int|float|string $total_harga
- * @property int|float|string $jumlah_bayar
- * @property int|float|string $kembalian
- * @property string|null $catatan
- */
 class TransaksiPembelian extends Model
 {
     protected $table = 'transaksi_pembelian';
@@ -37,10 +26,14 @@ class TransaksiPembelian extends Model
 
     protected $casts = [
         'tanggal_pembelian' => 'date',
-        'total_harga' => 'decimal:2',
-        'jumlah_bayar' => 'decimal:2',
-        'kembalian' => 'decimal:2',
+        'total_harga'       => 'decimal:2',
+        'jumlah_bayar'      => 'decimal:2',
+        'kembalian'         => 'decimal:2',
     ];
+
+    // -------------------------------------------------------------------------
+    // Relations
+    // -------------------------------------------------------------------------
 
     public function supplier(): BelongsTo
     {
@@ -52,63 +45,119 @@ class TransaksiPembelian extends Model
         return $this->hasMany(DetailTransaksiPembelian::class, 'id_transaksi_pembelian', 'id');
     }
 
+    // -------------------------------------------------------------------------
+    // Journal Generation
+    // -------------------------------------------------------------------------
+
+    /**
+     * Buat atau perbarui jurnal otomatis untuk transaksi pembelian.
+     *
+     * Aturan:
+     *  - lunas       → Debit Persediaan | Credit Kas
+     *  - belum_lunas → Debit Persediaan | Credit Hutang Usaha
+     *  - cicilan     → Debit Persediaan | Credit Kas (sebagian) + Hutang (sisa)
+     */
     public function buatJurnal(): void
     {
-        $total = (float) $this->total_harga;
+        // kode_pembelian sudah berformat 'PBL-xxxx', pakai langsung sebagai nomor jurnal
+        $nomorJurnal = $this->kode_pembelian;
 
-        if ($total <= 0) {
-            return;
-        }
+        $akunPersediaan = $this->resolveAccount('1130'); // Persediaan Barang Dagang
+        $akunKas        = $this->resolveAccount('1101'); // Kas Toko
+        $akunUtang      = $this->resolveAccount('2101'); // Hutang Usaha Supplier
 
-        $persediaan = ChartOfAccount::where('kode_akun', '1130')->first();
-        $kasAtauBank = ChartOfAccount::where(
-            'kode_akun',
-            $this->metode_pembayaran === 'transfer' ? '1110' : '1101'
-        )->first();
-        $hutangSupplier = ChartOfAccount::where('kode_akun', '2101')->first();
+        DB::transaction(function () use ($nomorJurnal, $akunPersediaan, $akunKas, $akunUtang) {
+            // Hapus jurnal lama agar tidak duplikat saat edit
+            JournalEntry::where('nomor_jurnal', $nomorJurnal)->delete();
 
-        if (! $persediaan || ! $kasAtauBank || ! $hutangSupplier) {
-            return;
-        }
-
-        $jumlahBayar = max(0, (float) $this->jumlah_bayar);
-        $dibayar = min($jumlahBayar, $total);
-        $sisaHutang = max(0, $total - $dibayar);
-
-        $journalEntry = JournalEntry::updateOrCreate(
-            ['nomor_jurnal' => $this->kode_pembelian],
-            [
-                'tanggal' => $this->tanggal_pembelian,
-                'keterangan' => 'Pembelian barang '.$this->kode_pembelian,
-                'status' => 'posted',
-            ],
-        );
-
-        $journalEntry->lines()->delete();
-
-        $journalEntry->lines()->create([
-            'chart_of_account_id' => $persediaan->id,
-            'keterangan' => 'Persediaan barang dagang',
-            'debit' => $total,
-            'kredit' => 0,
-        ]);
-
-        if ($dibayar > 0) {
-            $journalEntry->lines()->create([
-                'chart_of_account_id' => $kasAtauBank->id,
-                'keterangan' => 'Pembayaran pembelian',
-                'debit' => 0,
-                'kredit' => $dibayar,
+            $entry = JournalEntry::create([
+                'nomor_jurnal' => $nomorJurnal,
+                'tanggal'      => $this->tanggal_pembelian,
+                'keterangan'   => 'Pembelian barang - ' . $this->kode_pembelian,
+                'status'       => 'posted',
             ]);
+
+            $totalHarga  = (float) $this->total_harga;
+            $jumlahBayar = (float) $this->jumlah_bayar;
+
+            // DEBIT — Persediaan Barang
+            JournalLine::create([
+                'journal_entry_id'    => $entry->id,
+                'chart_of_account_id' => $akunPersediaan->id,
+                'keterangan'          => 'Pembelian barang - ' . $this->kode_pembelian,
+                'debit'               => $totalHarga,
+                'kredit'              => 0,
+            ]);
+
+            if ($this->status_pembayaran === 'lunas') {
+
+                // KREDIT — Kas Toko
+                JournalLine::create([
+                    'journal_entry_id'    => $entry->id,
+                    'chart_of_account_id' => $akunKas->id,
+                    'keterangan'          => 'Bayar lunas pembelian - ' . $this->kode_pembelian,
+                    'debit'               => 0,
+                    'kredit'              => $totalHarga,
+                ]);
+
+            } elseif ($this->status_pembayaran === 'belum_lunas') {
+
+                // KREDIT — Hutang Usaha Supplier
+                JournalLine::create([
+                    'journal_entry_id'    => $entry->id,
+                    'chart_of_account_id' => $akunUtang->id,
+                    'keterangan'          => 'Utang pembelian - ' . $this->kode_pembelian,
+                    'debit'               => 0,
+                    'kredit'              => $totalHarga,
+                ]);
+
+            } elseif ($this->status_pembayaran === 'cicilan') {
+
+                // KREDIT — Kas (porsi yang sudah dibayar)
+                if ($jumlahBayar > 0) {
+                    JournalLine::create([
+                        'journal_entry_id'    => $entry->id,
+                        'chart_of_account_id' => $akunKas->id,
+                        'keterangan'          => 'Bayar sebagian - ' . $this->kode_pembelian,
+                        'debit'               => 0,
+                        'kredit'              => $jumlahBayar,
+                    ]);
+                }
+
+                // KREDIT — Hutang (sisa)
+                $sisa = $totalHarga - $jumlahBayar;
+                if ($sisa > 0) {
+                    JournalLine::create([
+                        'journal_entry_id'    => $entry->id,
+                        'chart_of_account_id' => $akunUtang->id,
+                        'keterangan'          => 'Sisa utang - ' . $this->kode_pembelian,
+                        'debit'               => 0,
+                        'kredit'              => $sisa,
+                    ]);
+                }
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Private Helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Resolve ChartOfAccount by kode_akun.
+     * Lempar exception yang jelas agar tidak crash dengan null->id.
+     */
+    private function resolveAccount(string $kodeAkun): ChartOfAccount
+    {
+        $account = ChartOfAccount::where('kode_akun', $kodeAkun)->first();
+
+        if (! $account) {
+            throw new InvalidArgumentException(
+                "Chart of Account dengan kode [{$kodeAkun}] tidak ditemukan. "
+                . 'Pastikan ChartOfAccountSeeder sudah dijalankan.'
+            );
         }
 
-        if ($sisaHutang > 0) {
-            $journalEntry->lines()->create([
-                'chart_of_account_id' => $hutangSupplier->id,
-                'keterangan' => 'Hutang usaha supplier',
-                'debit' => 0,
-                'kredit' => $sisaHutang,
-            ]);
-        }
+        return $account;
     }
 }

@@ -11,9 +11,17 @@ class CreateTransaksiPenjualan extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $total = collect($this->data['detailTransaksi'] ?? [])->sum(fn ($item) => (float) ($item['subtotal'] ?? 0));
+        $total = collect($this->data['detailTransaksi'] ?? [])
+            ->sum(fn($item) => (float) ($item['subtotal'] ?? 0));
+
         $data['total_harga'] = $total;
 
         return $data;
+    }
+
+    // otomatis buat jurnal setelah penjualan disimpan
+    protected function afterCreate(): void
+    {
+        $this->record->buatJurnal();
     }
 }

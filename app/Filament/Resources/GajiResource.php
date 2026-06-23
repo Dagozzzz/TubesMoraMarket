@@ -347,8 +347,16 @@ class GajiResource extends Resource
                     ->modalHeading('Tandai sebagai Telah Dibayar')
                     ->modalDescription('Apakah Anda yakin ingin mengubah status gaji ini menjadi telah dibayar?')
                     ->action(function (Gaji $record) {
+                        // Update status terlebih dahulu
                         $record->update(['status' => 'dibayar']);
-                        
+
+                        // Reload record agar status dan relasi terbaru tersedia
+                        $record->refresh();
+                        $record->load('karyawan');
+
+                        // Buat jurnal penggajian otomatis
+                        $record->buatJurnal();
+
                         // Kirim email jika karyawan punya email
                         if ($record->karyawan && $record->karyawan->email) {
                             Mail::to($record->karyawan->email)->send(new GajiDibayarMail($record));

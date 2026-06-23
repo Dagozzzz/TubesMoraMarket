@@ -13,4 +13,12 @@ class CreateExpenseTransaction extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    /**
+     * Otomatis buat jurnal setelah transaksi beban disimpan.
+     */
+    protected function afterCreate(): void
+    {
+        $this->record->buatJurnal();
+    }
 }
