@@ -9,10 +9,10 @@ return new class extends Migration
     
     public function up(): void
     {
-        Schema::create('gajis', function (Blueprint $table) {
+        Schema::create('gaji', function (Blueprint $table) {
             $table->id();
             $table->string('no_slip')->unique();
-            $table->foreignId('karyawan_id')->constrained('karyawans')->onDelete('cascade');
+            $table->foreignId('karyawan_id')->constrained('karyawan')->onDelete('cascade');
             $table->date('tgl');
             $table->integer('gaji_pokok')->default(0);
             $table->integer('tunjangan')->default(0);
@@ -27,6 +27,6 @@ return new class extends Migration
     
     public function down(): void
     {
-        Schema::dropIfExists('gajis');
+        Schema::dropIfExists('gaji');
     }
 };

@@ -139,9 +139,9 @@ class GajiResource extends Resource
                                 if (!$state) {
                                     $set('gaji_pokok', 0);
                                 } else {
-                                    $karyawan = Karyawan::with('jabatan')->find($state);
+                                    $karyawan = Karyawan::find($state);
                                     if ($karyawan && $karyawan->jabatan) {
-                                        $jabatan = strtolower($karyawan->jabatan->nama_jabatan);
+                                        $jabatan = strtolower($karyawan->jabatan);
                                         
                                         // Gaji dibagi berdasarkan jabatan
                                         if (str_contains($jabatan, 'kebersihan')) {
@@ -376,7 +376,7 @@ class GajiResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListGajis::route('/'),
+            'index' => Pages\ListGaji::route('/'),
             'create' => Pages\CreateGaji::route('/create'),
             'edit' => Pages\EditGaji::route('/{record}/edit'),
         ];

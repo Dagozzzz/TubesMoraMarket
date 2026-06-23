@@ -6,10 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    
     public function up(): void
     {
-        Schema::table('karyawans', function (Blueprint $table) {
-            //
+        Schema::create('jabatan', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama_jabatan'); // penting buat dropdown
+            $table->timestamps();
         });
     }
 
@@ -18,8 +21,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('karyawans', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('jabatan');
     }
 };

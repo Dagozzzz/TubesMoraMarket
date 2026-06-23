@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('id_customer')->nullable();
             $table->foreign('id_customer')
                 ->references('id_customer')
-                ->on('customers')
+                ->on('customer')
                 ->nullOnDelete();
             $table->unsignedBigInteger('id_kasir')->nullable();
             $table->foreign('id_kasir')

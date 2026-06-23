@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('gajis', function (Blueprint $table) {
+        Schema::table('gaji', function (Blueprint $table) {
             $table->unsignedTinyInteger('periode_bulan')->nullable()->after('tgl');
             $table->unsignedSmallInteger('periode_tahun')->nullable()->after('periode_bulan');
         });
@@ -16,7 +16,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('gajis', function (Blueprint $table) {
+        Schema::table('gaji', function (Blueprint $table) {
             $table->dropColumn(['periode_bulan', 'periode_tahun']);
         });
     }
