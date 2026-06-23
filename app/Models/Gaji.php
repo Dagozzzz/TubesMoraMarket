@@ -34,9 +34,17 @@ class Gaji extends Model
         return $this->belongsTo(Karyawan::class, 'karyawan_id');
     }
 
+<<<<<<< HEAD
     // -------------------------------------------------------------------------
     // Auto Number
     // -------------------------------------------------------------------------
+=======
+    // Fungsi otomatis membuat no_slip
+    public static function getNoSlip()
+    {
+        $sql = "SELECT IFNULL(MAX(no_slip), 'SLP-0000000') as no_slip FROM gaji";
+        $kode = DB::select($sql);
+>>>>>>> 01773cbd7a7d813e2b8bc21e5306aa66d78dec99
 
     /**
      * Generate nomor slip gaji otomatis (format: SLP-0000001).

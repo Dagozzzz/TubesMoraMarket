@@ -139,9 +139,9 @@ class GajiResource extends Resource
                                 if (!$state) {
                                     $set('gaji_pokok', 0);
                                 } else {
-                                    $karyawan = Karyawan::with('jabatan')->find($state);
+                                    $karyawan = Karyawan::find($state);
                                     if ($karyawan && $karyawan->jabatan) {
-                                        $jabatan = strtolower($karyawan->jabatan->nama_jabatan);
+                                        $jabatan = strtolower($karyawan->jabatan);
                                         
                                         // Gaji dibagi berdasarkan jabatan
                                         if (str_contains($jabatan, 'kebersihan')) {

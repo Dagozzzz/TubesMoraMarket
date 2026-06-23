@@ -126,26 +126,8 @@ class BarangResource extends Resource
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters([
-                //
-            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                // Tables\Actions\DeleteAction::make()
-                //     ->label('Hapus')
-                //     ->icon('heroicon-o-trash')
-                //     ->button()
-                //     ->color('danger')
-                //     ->requiresConfirmation()
-                //     ->modalHeading('Hapus Barang')
-                //     ->modalDescription('Apakah Anda yakin ingin menghapus barang ini? Data yang sudah dihapus tidak dapat dikembalikan.')
-                //     ->modalSubmitActionLabel('Hapus')
-                //     ->modalCancelActionLabel('Batal')
-                //     ->successNotificationTitle('Barang berhasil dihapus')
-                //     ->extraAttributes([
-                //         'class' => 'relative z-10',
-                //         'onclick' => 'event.stopPropagation()',
-                //     ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -156,9 +138,7 @@ class BarangResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -168,5 +148,13 @@ class BarangResource extends Resource
             'create' => Pages\CreateBarang::route('/create'),
             'edit' => Pages\EditBarang::route('/{record}/edit'),
         ];
+    }
+
+    // Widget barang TIDAK didaftarkan di sini (getWidgets() di Resource
+    // mendaftarkan ke panel global sehingga ikut muncul di Dashboard utama).
+    // Chart ditampilkan melalui ListBarangs::getHeaderWidgets() secara lokal.
+    public static function getWidgets(): array
+    {
+        return [];
     }
 }

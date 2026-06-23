@@ -19,7 +19,7 @@ return new class extends Migration
 
             $table->foreign('id_supplier')
                 ->references('id')
-                ->on('suppliers')
+                ->on('supplier')
                 ->restrictOnDelete();
 
             $table->date('tanggal_pembelian');

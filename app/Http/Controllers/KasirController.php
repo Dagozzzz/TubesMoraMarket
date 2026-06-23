@@ -196,7 +196,7 @@ class KasirController extends Controller
         return view('kasir.checkout', [
             'cart' => $this->cart(),
             'cartSummary' => $this->cartSummary(),
-            'customers' => Customer::orderBy('nama_customer')->get(),
+            'customer' => Customer::orderBy('nama_customer')->get(),
             'selectedCustomerId' => session('checkout.id_customer'),
             'midtransClientKey' => config('services.midtrans.client_key'),
             'midtransSnapUrl' => rtrim(config('services.midtrans.snap_url'), '/') . '/snap/snap.js',
@@ -213,7 +213,7 @@ class KasirController extends Controller
         }
 
         $validated = request()->validate([
-            'id_customer' => ['required', 'string', 'exists:customers,id_customer'],
+            'id_customer' => ['required', 'string', 'exists:customer,id_customer'],
         ]);
 
         if ($this->cartSummary()['items'] === 0) {

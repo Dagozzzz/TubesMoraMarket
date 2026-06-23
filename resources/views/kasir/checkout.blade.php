@@ -101,7 +101,7 @@
                 <label for="id_customer">Customer</label>
                 <select id="id_customer" name="id_customer" form="midtrans-payment-form" required>
                     <option value="">Pilih customer</option>
-                    @foreach ($customers as $customer)
+                    @foreach ($customer as $customer)
                         <option value="{{ $customer->id_customer }}" @selected(old('id_customer', $selectedCustomerId) === $customer->id_customer)>
                             {{ $customer->id_customer }} - {{ $customer->nama_customer }}
                         </option>
@@ -110,7 +110,7 @@
                 @error('id_customer')
                     <div class="error-text">{{ $message }}</div>
                 @enderror
-                @if ($customers->isEmpty())
+                @if ($customer->isEmpty())
                     <div class="error-text">Belum ada master data customer. Tambahkan customer dulu dari admin.</div>
                 @endif
             </div>

@@ -18,6 +18,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransaksiPenjualanResource extends Resource
 {
@@ -166,6 +167,8 @@ class TransaksiPenjualanResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->emptyStateHeading('No Transaksi Penjualan')
+            ->emptyStateDescription('Belum ada data yang cocok. Jika data seeder sudah dijalankan, reset pencarian atau filter tabel.')
             ->columns([
                 TextColumn::make('kode_penjualan')
                     ->label('Kode')
@@ -262,6 +265,12 @@ class TransaksiPenjualanResource extends Resource
     public static function getRelations(): array
     {
         return [];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['customer', 'kasir', 'detailTransaksi']);
     }
 
     public static function getPages(): array
